@@ -12,17 +12,26 @@ script, audit it for Lua 5.4 compatibility, fix bugs that were tracked
 upstream, and add a provenance header preserving the original-author
 credit.
 
+## Layout
+
+The `scripts/` tree in this repo mirrors a hub's `scripts/` tree, so
+paths line up 1:1:
+
+- `scripts/<name>.lua` - main script
+- `scripts/lang/<name>.lang.<lang>` - language file(s) for that script
+- `scripts/data/<name>_<...>.tbl` - persistent state files (some scripts
+  use `scripts/<name>/...` instead; see per-script docs)
+
 ## Installing a script
 
-Each script ships as a `.lua` file plus optional `<scriptname>.lang.<lang>`
-files. To install:
+The simplest install is wholesale: copy everything from
+`repo/scripts/` into your hub's `scripts/` directory, preserving
+relative paths. To install just one script, copy its `.lua` file plus
+any companion files under `scripts/lang/`, `scripts/data/`, or
+`scripts/<scriptname>/` paths that the script references.
 
-1. Copy the `.lua` file into your hub's `scripts/` directory.
-2. Copy any matching language files into your hub's `scripts/lang/`
-   directory.
-3. Restart the hub or run `+reload`.
-
-Scripts are not auto-loaded; operators opt in script by script.
+Restart the hub or run `+reload` after copying. Scripts are not
+auto-loaded by core; operators opt in script by script.
 
 ## Compatibility
 
