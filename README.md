@@ -14,24 +14,29 @@ credit.
 
 ## Layout
 
-The `scripts/` tree in this repo mirrors a hub's `scripts/` tree, so
-paths line up 1:1:
+Each plugin lives in its own folder under `scripts/`. The folder's
+internal structure mirrors the hub's `scripts/` tree, so a recursive
+copy of the plugin folder lands every file at the right path:
 
-- `scripts/<name>.lua` - main script
-- `scripts/lang/<name>.lang.<lang>` - language file(s) for that script
-- `scripts/data/<name>_<...>.tbl` - persistent state files (some scripts
-  use `scripts/<name>/...` instead; see per-script docs)
+```
+scripts/<plugin>/
+    <plugin>.lua                     -> hub scripts/<plugin>.lua
+    lang/<plugin>.lang.<lang>        -> hub scripts/lang/...
+    data/<plugin>_<state>.tbl        -> hub scripts/data/...
+    <plugin>/<state>.tbl             -> hub scripts/<plugin>/...   (script-named state dirs)
+```
 
-## Installing a script
+## Installing a plugin
 
-The simplest install is wholesale: copy everything from
-`repo/scripts/` into your hub's `scripts/` directory, preserving
-relative paths. To install just one script, copy its `.lua` file plus
-any companion files under `scripts/lang/`, `scripts/data/`, or
-`scripts/<scriptname>/` paths that the script references.
+Copy the contents of the plugin folder into your hub's `scripts/`
+directory:
 
-Restart the hub or run `+reload` after copying. Scripts are not
-auto-loaded by core; operators opt in script by script.
+```sh
+cp -r repo/scripts/<plugin>/* /opt/luadch/scripts/
+```
+
+Restart the hub or run `+reload` after copying. Plugins are not
+auto-loaded by core; operators opt in plugin by plugin.
 
 ## Compatibility
 
