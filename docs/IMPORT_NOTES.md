@@ -13,8 +13,9 @@ would require a complete rewrite (not just a Lua-5.4 syntax migration).
 ## Summary
 
 - 34 total distinct script families
-- 30 T1 (drop-in audit, low-risk migration)
+- 29 T1 (drop-in audit, low-risk migration)
 - 4 T2 (works after non-trivial Lua-5.4 fix)
+- 1 Deferred (etc_txtsend - blocked on bundled `lfs` C library; see entry below)
 - 0 Drop (replaced by core / fundamentally broken)
 - 19 upstream issues mapped to specific scripts
 
@@ -404,17 +405,25 @@ would require a complete rewrite (not just a Lua-5.4 syntax migration).
 
 **Function:** Sends text files to users on request.
 
-**Tier:** T1.
+**Tier:** Deferred (re-classed from T1).
 
 **Lua-5.4 issues:** None spotted.
 
-**Sandbox issues:** None.
+**Sandbox issues:** **Requires `lfs` (LuaFileSystem)** via `require "lfs"`
+(uses `lfs.dir()` to enumerate the available text-file directory at
+runtime). luadch-ng v3.1.x does not bundle `lfs`; the plugin
+silently fails to load until `lfs` is provided.
 
 **Overlap with core backlog:** —.
 
 **Upstream issues touching this:** —.
 
-**Notes:** Platform-specific (Windows). Safe import.
+**Notes:** Deferred from the user-info import batch. Three options to
+re-import: (a) bundle `lfs` in the hub build (CMakeLists.txt change,
+multi-PR Phase-8+ scope); (b) refactor the plugin to read a
+hand-maintained file list instead of `lfs.dir`-discovery; (c) ship the
+plugin as-is with an operator-side `lfs` install requirement. None
+chosen yet; no operator demand observed.
 
 ---
 
