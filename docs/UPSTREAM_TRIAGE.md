@@ -18,16 +18,28 @@ already-decided items.
 - **Already addressed**: caught during import or by hub-side work
 - **Deferred**: real bug, but needs more design / clean repro
 
-## Plugins not yet triaged
+## Triage status
 
-The following imported plugins have open upstream issues that haven't
-been triaged here yet:
+**All 19 mapped upstream issues triaged.** See per-plugin sections
+below for the per-issue disposition. Roll-up:
 
-Plus one upstream issue against an imported plugin that is audit-only:
+| Plugin | Issue(s) | Disposition |
+|---|---|---|
+| etc_EventAnnouncer | #1 | Fixed (PR #13) |
+| cmd_pm2offliners | #29, #30, #41 | Already addressed (PR #14) |
+| etc_mainecho | #5 | Fixed defensively (PR #15) |
+| etc_onlinecounter | #19 | Fixed (PR #16) |
+| etc_requests | #38 | Fixed (PR #17) |
+| etc_requests | #40 | Already addressed + feature deferred (PR #17) |
+| etc_requests | #36 | Feature deferred (PR #17) |
+| ptx_freshstuff | #22, #18, #39 | Fixed (PR #18) |
+| etc_ccpmblocker | #26 | Won't fix - protocol limit (PR #19) |
 
-- etc_ccpmblocker: #26 (passive-mode CCPM ~85% success rate is a
-  protocol-level limitation, not a code bug; will be recorded as
-  Won't-fix when its turn comes)
+The five general / unmapped upstream issues from the import-pass
+([#28 search flood, #34 level-XX login gate, #33 schedule restart,
+#25 spam protection, #24 opchat history]) belong to hub-core scope
+or are feature requests that don't have a single home plugin; not
+addressed in this sweep.
 
 ---
 
@@ -323,6 +335,73 @@ month 3 rollover deducts and they go negative -> blocked.
 After the fix: a fresh user accumulates real minutes throughout
 their grace month; at next rollover FreeMonth--, no deduction, full
 TotalTime preserved. Subsequent months: standard deduction logic.
+
+---
+
+## etc_ccpmblocker
+
+### luadch/scripts#26 - doesn't block all users from using CCPM
+
+**Status:** Won't fix (protocol-level limitation).
+
+**Symptom (upstream):** With `etc_ccpmblocker` enabled in a hub of
+300-400 users, the issue reporter could still establish CCPM with
+12-15 of them (~4%) - mostly with users in passive mode. Even when
+both clients only had this one hub in common.
+
+**Why won't fix:** What the script can do, it already does. The
+upstream complaint is a protocol-level limit, not a missing fix.
+
+**What the script does today:**
+
+- On `onConnect` / `onInf`, strips the `CCPM` token from the user's
+  `SU` (Supports) field before the BINF is broadcast to others. This
+  removes the "CCPM is available" hint other clients use to decide
+  whether to negotiate.
+- For pairs of users at or above `op_level` who interact (PM,
+  search-result, CTM, RCM), sends each user a forged BINF re-adding
+  CCPM only between the two of them. This is the operator-pair
+  bypass.
+
+**Why CCPM can still establish anyway:**
+
+CCPM is a **peer-to-peer feature**, established over a direct TCP
+connection between two clients. The hub only sees / forwards the
+ADC negotiation messages; the actual data flows peer-to-peer.
+
+The hub cannot prevent CCPM 100% because:
+
+- Clients **cache** CCPM key material and peer-known capabilities
+  across sessions. Once two clients have done CCPM with each other
+  in any context, they can retry the direct connection without
+  needing fresh `SU=CCPM` advertising.
+- Clients can speculatively attempt CCPM even without the
+  advertising flag, particularly with peers they've talked to before.
+- The hub can drop the `CCPM` flag from BINF, but it cannot stop two
+  cooperating clients from opening a TCP socket to each other if
+  they already have each other's connection details from prior
+  sessions.
+
+A "100% CCPM block" would require:
+
+- Intercepting `CTM` / `RCM` connection-setup messages that match
+  CCPM's token pattern and dropping them.
+- Possibly tracking peer-pair known-capabilities and rewriting
+  responses.
+
+That's protocol-level work that doesn't fit a plugin script and
+overlaps with hub-core surface ([`luadch-ng/luadch`](https://github.com/luadch-ng/luadch)
+itself). The issue reporter even acknowledges:
+
+> I know that only one hub that allows CCPM is enough to established
+> a CCPM connection.
+
+The 4% residual success rate they observed is consistent with
+clients reusing cached CCPM state from outside this hub's view.
+
+**Disposition:** Audit-only entry. The script's BINF-flag manipulation
+is the realistic best-effort defence; closing the residual hole
+requires deeper hub-protocol intervention not in scope for a plugin.
 
 ---
 
