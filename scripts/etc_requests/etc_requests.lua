@@ -13,10 +13,21 @@
       pass nil for self and error at runtime on every successful add. Other
       sites of user:firstnick() in the same file already use the colon form.
 
-    Known unfixed upstream bugs (deferred to the post-import sweep):
-    - luadch/scripts#40: delete should announce reason
-    - luadch/scripts#38: min-level display bug on +help
-    - luadch/scripts#36: missing opt-out
+    Upstream-issue triage (luadch/scripts):
+    - #38 (min-level display) FIXED: append the actual permitted-level
+      list to help_desc at script load (see do-block below). Same family
+      of fix as luadch-ng/luadch's cmd_mass change for upstream #217.
+    - #40 (delete should announce) ALREADY ADDRESSED: v0.8 added a
+      hub.broadcast( msg_deleted_by, ... ) at the delete path so all
+      users see the deletion. The additional "include reason argument"
+      ask is feature work; deferred (would need parser changes that
+      conflict with check_spaces=false setups).
+    - #36 (per-user opt-out for the [CHAT]Requests bot) DEFERRED as a
+      feature request: the upstream changelog "chat is optional (opt
+      out)" referred to the script-wide activate_chat cfg, not to a
+      per-user toggle. Implementing per-user opt-out requires a new
+      state file, +reqchatoff/+reqchaton commands, and integration in
+      the feed() broadcast loop - not part of this triage sweep.
 
     Database compatibility note (from upstream): v0.8 rewrote the database
     schema; existing scripts/data/etc_requests.tbl files from < v0.8 are
@@ -250,6 +261,28 @@ local msg_timestamp = "[ %Y-%m-%d  %X ]    "  -- lua os.date function parameters
 --// messages
 local help_title = lang.help_title or "etc_requests.lua"
 local help_desc  = lang.help_desc  or  "a script to request / fill releases"
+
+-- Closes upstream luadch/scripts#38: append the actual list of permitted
+-- levels to help_desc. util.getlowestlevel returns just the lowest
+-- TRUE-keyed level, which is misleading when there are false-gaps above
+-- it (e.g. minlevel[55]=false excludes sbot, but +help shows
+-- "Min Level: 20" implying everyone level 20+ is allowed).
+do
+    local hub_levels = cfg.get( "levels" )
+    local allowed = { }
+    for k, v in pairs( minlevel ) do
+        if v == true then allowed[ #allowed + 1 ] = k end
+    end
+    table.sort( allowed )
+    local parts = { }
+    for _, lvl in ipairs( allowed ) do
+        local name = hub_levels and hub_levels[ lvl ]
+        parts[ #parts + 1 ] = name and ( lvl .. " " .. name ) or tostring( lvl )
+    end
+    if #parts > 0 then
+        help_desc = help_desc .. "  |  allowed levels: " .. table.concat( parts, ", " )
+    end
+end
 
 local msg_help_01 = lang.msg_help_01 or "[+!#]show"
 local msg_help_02 = lang.msg_help_02 or "[+!#]add <release>"
