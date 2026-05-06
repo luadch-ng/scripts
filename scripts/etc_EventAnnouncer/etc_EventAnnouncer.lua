@@ -157,7 +157,7 @@ end
 local makeAnnounces = function()
     local msg = ""
     for k, v in orderedPairs( epochTable() ) do
-        local d, h, m, s = util_formatseconds( os_difftime( tonumber( k ) - os_time() ) )
+        local d, h, m, s = util_formatseconds( tonumber( k ) - os_time() )
         msg = msg .. utf_format( msg_line, v, d .. msg_days .. h .. msg_hours .. m .. msg_minutes .. s .. msg_seconds )
     end
     return msg
@@ -177,7 +177,7 @@ end
 
 hub.setlistener( "onTimer", { },
     function()
-        if os_difftime( os_time() - start ) >= delay then
+        if (os_time() - start) >= delay then
             check()
             start = os_time()
         end

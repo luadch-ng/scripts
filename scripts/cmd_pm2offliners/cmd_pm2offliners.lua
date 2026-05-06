@@ -275,7 +275,7 @@ hub.setlistener( "onLogin", { }, listener )
 hub.setlistener("onTimer", { },
     function( )
         for time, func in pairs( list ) do
-            if os_difftime( os_time( ) - time ) >= delay then
+            if (os_time() - time) >= delay then
                 func( )
                 list[ time ] = nil
             end
