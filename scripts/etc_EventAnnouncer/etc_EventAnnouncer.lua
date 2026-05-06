@@ -144,7 +144,13 @@ local epochTable = function()
         if dest_m and dest_d then
             dest_m, dest_d = tonumber( dest_m ), tonumber( dest_d )
             local cur_year, cur_month, cur_day = tonumber( os_date( "%Y" ) ), tonumber( os_date( "%m" ) ), tonumber( os_date( "%d" ) )
-            if ( dest_m < cur_month ) or ( ( dest_m == cur_month ) and ( dest_d < cur_day ) ) then
+            -- fixed for luadch/scripts#1: bump rollover to next year if the
+            -- announce date is today or earlier in the year. Upstream used "<"
+            -- which left today's announce in the past for the rest of the day
+            -- (epoch_time is 00:00:01) and crashed makeAnnounces with a
+            -- negative diff. "<=" rolls today's announce to next year as soon
+            -- as midnight passes.
+            if ( dest_m < cur_month ) or ( ( dest_m == cur_month ) and ( dest_d <= cur_day ) ) then
                 cur_year = cur_year + 1
             end
             local epoch_time = os_time{ year=cur_year, month=dest_m, day=dest_d, hour=0, sec=1 }
@@ -157,8 +163,19 @@ end
 local makeAnnounces = function()
     local msg = ""
     for k, v in orderedPairs( epochTable() ) do
-        local d, h, m, s = util_formatseconds( tonumber( k ) - os_time() )
-        msg = msg .. utf_format( msg_line, v, d .. msg_days .. h .. msg_hours .. m .. msg_minutes .. s .. msg_seconds )
+        local diff = tonumber( k ) - os_time()
+        -- defensive guard for luadch/scripts#1: if the announce slipped into
+        -- the past (e.g. while the timer was firing exactly at rollover),
+        -- skip it instead of crashing on nil concatenation.
+        if diff > 0 then
+            -- second arg "true" selects the 4-return D/H/M/S variant of
+            -- util.formatseconds; upstream pulled D/H/M/S into d/h/m/s but
+            -- used the no-arg 5-return variant (Y/D/H/M/S), so the values
+            -- shown were actually years/days/hours/minutes - latent display
+            -- bug fixed alongside #1.
+            local d, h, m, s = util_formatseconds( diff, true )
+            msg = msg .. utf_format( msg_line, v, d .. msg_days .. h .. msg_hours .. m .. msg_minutes .. s .. msg_seconds )
+        end
     end
     return msg
 end
