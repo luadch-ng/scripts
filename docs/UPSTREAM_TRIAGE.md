@@ -23,7 +23,6 @@ already-decided items.
 The following imported plugins have open upstream issues that haven't
 been triaged here yet:
 
-- etc_requests: #36, #38, #40
 - ptx_freshstuff: #18, #22, #39
 
 Plus one upstream issue against an imported plugin that is audit-only:
@@ -126,6 +125,78 @@ end` guard at the top of the listener. Cost: one line. Benefit:
 matches operator expectation that bots-don't-trigger is an
 invariant, and guards against future hub-side changes that might
 re-introduce bot broadcasts firing the listener.
+
+---
+
+## etc_requests
+
+### luadch/scripts#38 - +help shows misleading "Min Level: 20"
+
+**Status:** Fixed in luadch-ng/scripts PR #17.
+
+**Symptom (upstream):** `+help` for the request script shows
+"Min. Level: 20", but the script's `minlevel` table uses true/false
+per level with gaps. Example: `[55] = false` (sbot) excludes that
+level, but `+help` claims everyone 20+ is allowed.
+
+**Root cause:** `util.getlowestlevel(minlevel)` returns just the
+lowest TRUE-keyed level (here 20). The string "Min Level: N" then
+implies an inclusive lower bound, which is wrong when there are
+false-gaps above N.
+
+**Fix (PR #17):** Append the actual list of permitted levels to
+`help_desc` at script load. Walks the `minlevel` table, collects
+levels keyed `true`, sorts, formats with level names from
+`cfg.get("levels")` where available, appends as
+`"  |  allowed levels: 20 reg, 30 vip, 40 svip, 50 server, 60
+operator, 70 supervisor, 80 admin, 100 hubowner"`.
+
+Same family of fix as the cmd_mass / luadch/luadch#217 change in
+[`luadch-ng/luadch`'s Interlude 2](https://github.com/luadch-ng/luadch/blob/master/docs/phases/INTERLUDE_UPSTREAM_TRIAGE_2.md).
+
+### luadch/scripts#40 - When delete a request make it possible to announce in main/pm
+
+**Status:** Already addressed (mostly) + deferred (additional ask).
+
+**Symptom (upstream):** "When deleting a request it will only be
+visible to the OP that has deleted the request."
+
+**Why already addressed:** v0.8 of etc_requests added a
+`hub.broadcast( msg_deleted_by, ... )` at the delete path
+(handle_releases, around line 661). All hub users see the deletion
+announcement now. The upstream symptom predates the v0.8 rewrite.
+
+**Deferred:** The additional ask ("announce the reason for deleting")
+would require extending `+request del` syntax to accept a reason
+argument. That conflicts with `check_spaces=false` setups (where
+release names can contain spaces, making "del rel reason" unparseable
+without a delimiter). Filed as feature work, not part of this triage
+sweep.
+
+### luadch/scripts#36 - Missing [CHAT]Requests opt-out functionality
+
+**Status:** Deferred as feature request.
+
+**Symptom (upstream):** "the latest build... does not seem to include
+the ability for users to opt-out of receiving [CHAT]Requests bot
+activity, despite the changelog mentioning 'chat is optional (opt
+out)'."
+
+**Triage:** The upstream changelog "chat is optional (opt out)"
+referred to the script-wide `activate_chat` cfg toggle (operator-
+level, not per-user). The user requesting this issue wants per-user
+opt-out via `+reqchatoff` / `+reqchaton`-style commands.
+
+**Why deferred:** Implementing per-user opt-out requires:
+- A new state file (e.g. `etc_requests_optoutusers.tbl`).
+- New commands `+request reqchatoff / reqchaton` and
+  `+reqchatoff / +reqchaton` aliases.
+- Integration in `feed()` so chat broadcasts skip opted-out users.
+- Right-click menu entries for opt-in/-out toggle.
+
+Approximately 50-80 lines of new code plus state-handling glue.
+Outside the scope of a triage sweep; logged as a deliverable feature
+that an operator can pick up later.
 
 ---
 
