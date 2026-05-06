@@ -96,6 +96,13 @@ local list = {}
 
 hub.setlistener("onBroadcast", {},
     function( user, adccmd, txt )
+        -- defensive for luadch/scripts#5: don't trigger on bot-originated
+        -- messages. In luadch-ng v3.1.x bots send via hub.broadcast() which
+        -- bypasses onBroadcast (core/hub.lua:1120 -> sendToAll, no
+        -- firelistener), so the upstream bug doesn't repro here, but the
+        -- check matches operator expectation and guards against future
+        -- regressions if the dispatch model ever changes.
+        if user:isbot() then return nil end
         local user_nick = user:nick()
         local user_level = user:level()
         local trig

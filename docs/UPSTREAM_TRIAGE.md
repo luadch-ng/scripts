@@ -23,7 +23,6 @@ already-decided items.
 The following imported plugins have open upstream issues that haven't
 been triaged here yet:
 
-- etc_mainecho: #5
 - etc_onlinecounter: #19
 - etc_requests: #36, #38, #40
 - ptx_freshstuff: #18, #22, #39
@@ -102,6 +101,32 @@ not user-editable - that's correct), but operator overrides go in
 `cfg/cfg.tbl` (user-editable), which is the standard luadch-ng
 convention. The upstream criticism ("must edit core") doesn't apply
 to our layout.
+
+---
+
+## etc_mainecho
+
+### luadch/scripts#5 - trigger when the output is from the hub bot
+
+**Status:** Fixed defensively in luadch-ng/scripts PR #15.
+
+**Symptom (upstream):** Trigger bot fires not only on user messages
+but also on hub-bot output. Example: hub-bot says something in main
+chat that contains a configured trigger keyword -> the trigger bot
+echoes it.
+
+**Why already mostly addressed in v3.1.x:** In our hub bots
+broadcast via `hub.broadcast()` (`core/hub.lua:1120`) which calls
+`sendToAll` directly without firing the `onBroadcast` listener. So
+our `onBroadcast` listener never receives bot-sourced messages in
+the first place. The upstream symptom shouldn't repro on a stock
+v3.1.x hub.
+
+**Fix anyway:** Added a one-line `if user:isbot() then return nil
+end` guard at the top of the listener. Cost: one line. Benefit:
+matches operator expectation that bots-don't-trigger is an
+invariant, and guards against future hub-side changes that might
+re-introduce bot broadcasts firing the listener.
 
 ---
 
