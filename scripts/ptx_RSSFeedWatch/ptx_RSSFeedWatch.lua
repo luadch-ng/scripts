@@ -4,28 +4,17 @@
     See https://github.com/luadch-ng/scripts/blob/master/docs/IMPORT_NOTES.md
     for the import-pass triage.
 
-    *** BLOCKED ON HUB FIX (luadch-ng/luadch#88) ***
+    Hub requirement: luadch-ng/luadch v3.1.2 or later, which ships the
+    canonical LuaSocket / LuaSec layout. The plugin's module-level
+    `require "socket.http"` and `require "ssl.https"` only resolve on
+    that layout. Earlier hub releases bundled flat
+    (`lib/luasocket/lua/http.lua` etc.) and the plugin would not load.
 
-    This plugin will NOT load on stock luadch-ng v3.1.x. Module-level
-    require calls fail because the bundled LuaSocket / LuaSec are flat
-    instead of the canonical nested tree:
-      require("socket.http")  -> not found
-      require("ssl.https")    -> not found
-    See luadch-ng/luadch#88 for the hub-side fix; tracking issue for
-    this plugin specifically: luadch-ng/scripts#10.
-
-    Until the hub fix lands, operators wanting this plugin can manually
-    rearrange their install:
-      mkdir hub/lib/luasocket/lua/socket
-      cp hub/lib/luasocket/lua/{http,url,headers,ftp,smtp,tp}.lua \\
-          hub/lib/luasocket/lua/socket/
-      mkdir hub/lib/luasec/lua/ssl
-      cp hub/lib/luasec/lua/{https,options}.lua hub/lib/luasec/lua/ssl/
-    Plus the bundled slaxml/slaxml.lua needs to live at hub/lib/slaxml/.
-    See Readme.txt in this folder for the full upstream install steps.
-
-    Once luadch-ng/luadch#88 closes, this plugin loads as-is and
-    luadch-ng/scripts#10 closes.
+    Bundled XML parser dep: slaxml/slaxml.lua ships in this plugin's
+    folder. Operator-side install requires placing it at
+    hub/lib/slaxml/slaxml.lua so `require "slaxml"` resolves via
+    package.path's `lib/?/?.lua` rule. See Readme.txt for the
+    upstream install steps.
 ]]--
 
 --[[
