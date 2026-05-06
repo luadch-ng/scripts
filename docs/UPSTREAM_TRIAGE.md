@@ -23,7 +23,6 @@ already-decided items.
 The following imported plugins have open upstream issues that haven't
 been triaged here yet:
 
-- etc_onlinecounter: #19
 - etc_requests: #36, #38, #40
 - ptx_freshstuff: #18, #22, #39
 
@@ -127,6 +126,61 @@ end` guard at the top of the listener. Cost: one line. Benefit:
 matches operator expectation that bots-don't-trigger is an
 invariant, and guards against future hub-side changes that might
 re-introduce bot broadcasts firing the listener.
+
+---
+
+## etc_onlinecounter
+
+### luadch/scripts#19 - TotalTime stuck at 0 for fresh registrations
+
+**Status:** Fixed in luadch-ng/scripts PR #16.
+
+**Symptom (upstream):** New users register, log in, sit in the hub
+for hours; `+onlinecounter myhubtime` reports `Total uptime: 0
+minutes`. `etc_onlinecounter.tbl` shows `SessionTime` ticking up but
+`TotalTime` constant at 0. `+onlinecounter toponline` says
+"Only 0 users in table".
+
+**Root cause:** A misplaced safe-month gate plus a slate-wiping
+rollover branch.
+
+1. **Per-minute accumulator gate.** New-user records (created in
+   `onLogin` and `onStart`) ship with `FreeMonth = 1` (a 1-month
+   grace period). The per-second `onTimer` handler accumulates
+   `SessionTime` always but gates `TotalTime` accumulation behind:
+   ```lua
+   if not v.FreeMonth or v.FreeMonth <= 0 or v.TotalTime < 0 then
+       if not FreeMonth or v.TotalTime < 0 then
+           ...accumulate...
+       end
+   end
+   ```
+   For a fresh user (`FreeMonth = 1, TotalTime = 0`) the outer guard
+   is false, so `TotalTime` stays at 0 for the entire first month.
+
+2. **Month-rollover slate wipe.** When the safe-month branch fires
+   at month rollover, it does `v.FreeMonth = v.FreeMonth - 1` (good)
+   AND `v.TotalTime = 0` (bad - if accumulation had been allowed,
+   this would wipe the user's month-1 progress).
+
+The combination: month 1 = no accumulation; rollover decrements
+FreeMonth and sets TotalTime = 0; month 2 starts at 0 with FreeMonth
+= 0; if the user doesn't earn `iTUT*60` minutes in month 2, the
+month 3 rollover deducts and they go negative -> blocked.
+
+**Fix (PR #16):**
+- **Always accumulate per-minute** when online, subject to the
+  `MaxTime` cap. Drop the safe-status gate from the accumulator.
+  Safe-month semantics belong at month-rollover, not on per-minute
+  ticks.
+- **Don't wipe TotalTime in the safe-month rollover branch.** Just
+  decrement `FreeMonth` and let the user keep what they earned.
+  iTUT*60 deduction stays suppressed for safe users (that's the
+  actual safe-month semantic).
+
+After the fix: a fresh user accumulates real minutes throughout
+their grace month; at next rollover FreeMonth--, no deduction, full
+TotalTime preserved. Subsequent months: standard deduction logic.
 
 ---
 

@@ -9,12 +9,14 @@
       arithmetic (os.time() - X). Same family of fix as luadch-ng/scripts#6;
       Lua 5.4 strict-checks os.difftime arity.
 
-    Known unfixed upstream bug: luadch/scripts#19 (TotalTime stuck at 0 for
-    new users). New-user records ship with FreeMonth=1 baked in; the timer
-    handler skips TotalTime accumulation while FreeMonth is set, so a fresh
-    reg never accumulates total time. Logic is a tangled FreeMonth state
-    machine; deferred to the post-import upstream-issue triage sweep where
-    we can think about the intent properly.
+    Behaviour fix - luadch/scripts#19 (TotalTime stuck at 0 for new users):
+    - Per-minute accumulator no longer gates on FreeMonth status. Always
+      accumulate TotalTime when online (subject to MaxTime cap). Upstream's
+      safe-status gate prevented fresh registrations (which start with
+      FreeMonth=1) from accumulating any TotalTime during their first month.
+    - Month-rollover safe-month branch no longer wipes TotalTime to 0.
+      Users keep their accumulated minutes through a safe month; only the
+      iTUT*60 monthly deduction is suppressed.
 ]]--
 
 --[[
@@ -706,7 +708,11 @@ hub.setlistener( "onTimer", { },
 						else
 							--if user has free month count down or remove
 							v.FreeMonth = v.FreeMonth-1
-							v.TotalTime = 0
+							-- fixed for luadch/scripts#19: removed v.TotalTime = 0 here.
+							-- With the accumulator fix below the user has been earning real
+							-- minutes during the safe month, so they should keep that progress.
+							-- Safe-month semantics are now "no iTUT*60 deduction" only, not
+							-- "wipe accumulated time".
 							OnError(i.." is not checked because "..v.FreeMonthReason.." and have "..v.FreeMonth.." no free month back. (Online time: "..MinutesToTime(v.TotalTime,true)..")")
 							
 						end
@@ -743,12 +749,19 @@ hub.setlistener( "onTimer", { },
             -- Online
 				if hub.isnickonline(v.CurrentNick) then
 					v.SessionTime = v.SessionTime + 1
-					if not v.FreeMonth or v.FreeMonth <= 0 or v.TotalTime < 0 then -- Don't add time if user is safe
-						if not FreeMonth or v.TotalTime < 0 then -- Don't add time during free month except if user is blocked
-							if v.TotalTime < tSettings.MaxTime * 60 then
-								v.TotalTime = v.TotalTime + 1
-							end
-						end
+					-- fixed for luadch/scripts#19: always accumulate TotalTime
+					-- when online (subject to MaxTime cap). Upstream gated this
+					-- behind safe-status checks (FreeMonth>0, FreeMonth-month),
+					-- so fresh registrations - which start with FreeMonth=1 from
+					-- the onLogin/onStart entry-creation path - never accumulated
+					-- TotalTime during their first month and showed as
+					-- "TotalTime: 0" forever to /myhubtime / /toponline. Safe-
+					-- month semantics belong at month-rollover (iTUT*60 deduction
+					-- is suppressed for users with FreeMonth>0), not on per-minute
+					-- accumulation. The MaxTime cap keeps long-time users from
+					-- overflowing.
+					if v.TotalTime < tSettings.MaxTime * 60 then
+						v.TotalTime = v.TotalTime + 1
 					end
 				end
 			end
