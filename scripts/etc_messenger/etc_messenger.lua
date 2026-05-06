@@ -130,7 +130,7 @@ end
 
 hub.setlistener( "onTimer", {},
     function( )
-        if os_difftime( os_time() - start ) >= delay then
+        if (os_time() - start) >= delay then
             local is_time = message[ time() ]
             if is_time then
                 local send_main = message[ os_date( "%H:%M" ) ][ "send_main" ]

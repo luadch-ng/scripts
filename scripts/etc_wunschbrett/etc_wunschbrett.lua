@@ -131,7 +131,7 @@ end
 
 hub.setlistener("onTimer", {},  --> Bei PtokaX = function OnTimer()
 	function()
-		if os_difftime( os_time() - start_time ) >= delay then
+		if (os_time() - start_time) >= delay then
 			hub.broadcast( amount( ), hub_bot )			
 			start_time = os_time()
 		end 	
