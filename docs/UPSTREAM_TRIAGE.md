@@ -23,8 +23,6 @@ already-decided items.
 The following imported plugins have open upstream issues that haven't
 been triaged here yet:
 
-- ptx_freshstuff: #18, #22, #39
-
 Plus one upstream issue against an imported plugin that is audit-only:
 
 - etc_ccpmblocker: #26 (passive-mode CCPM ~85% success rate is a
@@ -197,6 +195,79 @@ opt-out via `+reqchatoff` / `+reqchaton`-style commands.
 Approximately 50-80 lines of new code plus state-handling glue.
 Outside the scope of a triage sweep; logged as a deliverable feature
 that an operator can pick up later.
+
+---
+
+## ptx_freshstuff
+
+### luadch/scripts#22 - "Command incomplete" on `WhenAndWhatToShow["HH:MM"] = "all"`
+
+**Status:** Fixed in luadch-ng/scripts PR #18.
+
+**Symptom (upstream):** Setting `WhenAndWhatToShow["12:34"] = "all"` in
+the script's settings makes the timer at that minute broadcast the
+literal string "Command incomplete." instead of the all-releases
+list.
+
+**Root cause:** `FreshStuff.ShowRel(tab)` had a stub else-branch:
+
+```lua
+if tab == FreshStuff.NewestStuff then
+    -- ...build MsgNew properly...
+    FreshStuff.MsgNew = utf_format( msg_showrel_07, newest, Msg )
+else
+    FreshStuff.MsgAll = msg_error_03  -- "Command incomplete."
+end
+```
+
+When `tab` is `FreshStuff.AllStuff` (the all-list path), `MsgAll`
+gets set to the error placeholder instead of being built. The timer
+then broadcasts that placeholder.
+
+**Fix (PR #18):** Build `MsgAll` in the else-branch the same way
+`MsgNew` is built in the if-branch - iterate AllStuff capped at
+MaxShow, group by category, format with `msg_showrel_*`, store as
+`MsgAll`. The "all" timer trigger now actually broadcasts the
+release list.
+
+(The second sub-question in the upstream issue - "how do I trigger
+!prunerel from timing" - is a documentation request. The
+`auto_remove` cfg already supports daily prune; the issue reporter
+just hadn't found it. No code change.)
+
+### luadch/scripts#18 - delete release by name
+
+**Status:** Fixed in luadch-ng/scripts PR #18.
+
+**Symptom (upstream):** `+delrel <name>` rejects with the syntax
+error message; only `+delrel <ID#>` works.
+
+**Root cause:** `FreshStuff.DelCrap` gates on
+`tonumber(what) ~= nil` and falls through to the syntax-error reply
+otherwise.
+
+**Fix (PR #18):** Added a non-numeric branch that falls through to
+a full-title match against AllStuff. Multiple matches all get
+deleted (defensive, since add-path normally prevents duplicates).
+Empty result reports "Release not found".
+
+### luadch/scripts#39 - add a separator between announces (10-min idle)
+
+**Status:** Fixed in luadch-ng/scripts PR #18.
+
+**Symptom (upstream):** When new releases get announced via PM,
+it's hard to see what's new vs what's stale. Operator request:
+add a separator with date/time before each announce, but only if
+the previous announce was more than 10 minutes ago.
+
+**Fix (PR #18):** Added a module-level `last_announce_time`
+timestamp and a `separator_idle_seconds` constant (default 600 =
+10 minutes). Both `AddCrap` and `AddCrapAnnounce` now check
+`now - last_announce_time >= separator_idle_seconds` before the
+add-broadcast, and prepend a separator broadcast if so. Updates
+`last_announce_time` after. Operators can edit the lang string
+`msg_separator` (contains `%s` for the timestamp) and the script
+constant `separator_idle_seconds`.
 
 ---
 

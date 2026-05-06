@@ -24,10 +24,19 @@
     - Seven sites of unpack(...) replaced with table.unpack(...) -
       Lua 5.2+ moved unpack into table.
 
-    Known unfixed upstream bugs (deferred to post-import sweep):
-    - luadch/scripts#39: add separator between announces
-    - luadch/scripts#22: timer loading
-    - luadch/scripts#18: delete by name
+    Upstream-issue triage (luadch/scripts):
+    - #22 (FIXED): timer "all" trigger broadcast "Command incomplete."
+      because FreshStuff.ShowRel left FreshStuff.MsgAll = msg_error_03
+      as a placeholder. ShowRel's else-branch now builds the all-list
+      the same way the newest-list is built (capped at MaxShow).
+    - #18 (FIXED): FreshStuff.DelCrap now falls through to a full-title
+      match against AllStuff when the argument isn't numeric. Previous
+      behaviour rejected any non-numeric arg with the syntax-error msg.
+    - #39 (FIXED): added an idle-time separator before each add-broadcast.
+      If the previous announce was more than separator_idle_seconds
+      (default 600 = 10 minutes) ago, a separator with the current
+      timestamp is broadcast first. Configurable via msg_separator (lang
+      string) and separator_idle_seconds (script-level constant).
 
     Sandbox note (not changed): script uses dofile() to load .dat data
     files (categories, releases, opt-out users) instead of
@@ -302,6 +311,15 @@ local msg_disabled = lang.msg_disabled or "This command is disabled."
 local msg_empty_db = lang.msg_empty_db or "There are no Releases in the database."
 local msg_missing_cat = lang.msg_missing_cat or "No such type."
 
+-- added for luadch/scripts#39: idle separator on add. The separator is
+-- broadcast immediately before an add-broadcast if the previous announce
+-- was more than separator_idle_seconds ago. Operators can edit
+-- msg_separator (containing %s for the timestamp) or change the threshold
+-- by editing separator_idle_seconds; defaults follow the upstream issue's
+-- "10 minutes" suggestion.
+local msg_separator = lang.msg_separator or "[ %s ] " .. string.rep( "=", 60 )
+local separator_idle_seconds = 10 * 60
+
 local msg_add_crap_01 = lang.msg_add_crap_01 or "Dollar chars ($) are not allowed in release names."
 local msg_add_crap_02 = lang.msg_add_crap_02 or "The release already exists in the category: "
 local msg_add_crap_03 = lang.msg_add_crap_03 or " was added as: "
@@ -423,6 +441,10 @@ local msg_already_optin = lang.msg_already_optin or "You have already turned on 
 
 --FreshStuff.AllStuff = {}; FreshStuff.NewestStuff = {}; FreshStuff.TopAdders = {}
 FreshStuff.Timer = 0
+
+-- module-level for luadch/scripts#39: timestamp of last add-broadcast,
+-- used to decide whether to prepend an idle separator before the next.
+local last_announce_time = 0
 
 --FreshStuff.Broadcast = function( msg, from, pm, me )
 --  local normalUsers = hub_getusers()
@@ -873,6 +895,12 @@ function FreshStuff.AddCrap( user, data, env )
         end
       end
       SendTxt( user, env, botname(), tune .. msg_add_crap_03 .. cat )
+      -- luadch/scripts#39: prepend idle-time separator if it's been a while.
+      local now = os.time()
+      if (now - last_announce_time) >= separator_idle_seconds then
+        FreshStuff.Broadcast( utf_format( msg_separator, os.date( "%Y-%m-%d %H:%M" ) ), botname() )
+      end
+      last_announce_time = now
       FreshStuff.Broadcast( user:nick() .. msg_add_crap_04 .. cat .. msg_add_crap_05 .. tune, botname() )
       FreshStuff.Count = FreshStuff.Count + 1
       FreshStuff.AllStuff[ FreshStuff.Count ] = { cat, user:nick(), os.date( dateFormat ), tune }
@@ -905,6 +933,12 @@ function FreshStuff.AddCrapAnnounce( user, data, env )
         end
       end
       SendTxt( user, env, botname(), tune .. msg_add_crap_03 .. cat )
+      -- luadch/scripts#39: prepend idle-time separator if it's been a while.
+      local now = os.time()
+      if (now - last_announce_time) >= separator_idle_seconds then
+        FreshStuff.Broadcast( utf_format( msg_separator, os.date( "%Y-%m-%d %H:%M" ) ), botname() )
+      end
+      last_announce_time = now
       FreshStuff.Broadcast( alibi .. msg_add_crap_04 .. cat .. msg_add_crap_05 .. tune, botname() )
       FreshStuff.Count = FreshStuff.Count + 1
       FreshStuff.AllStuff[ FreshStuff.Count ] = { cat, alibi, os.date( dateFormat ), tune }
@@ -998,7 +1032,32 @@ function FreshStuff.ShowRel( tab )
 
     FreshStuff.MsgNew = utf_format( msg_showrel_07, newest, Msg )
   else
-    FreshStuff.MsgAll = msg_error_03
+    -- fixed for luadch/scripts#22: upstream set MsgAll = msg_error_03
+    -- ("Command incomplete.") here as a placeholder, so timer triggers
+    -- like WhenAndWhatToShow["12:00"] = "all" broadcast garbage instead
+    -- of the release list. Build MsgAll the same way MsgNew is built
+    -- above, capped at MaxShow.
+    if FreshStuff.Count == 0 then
+      FreshStuff.MsgAll = msg_empty_db
+    else
+      local target = FreshStuff.Count - FreshStuff.MaxShow + 1
+      if target < 1 then target = 1 end
+      for i = target, FreshStuff.Count do
+        if FreshStuff.AllStuff[ i ] then
+          cat, who, when, title = table.unpack( FreshStuff.AllStuff[ i ] )
+          if title then
+            if FreshStuff.Types[ cat ] then cat = FreshStuff.Types[ cat ] end
+            if not tmptbl[ cat ] then tmptbl[ cat ] = {} end
+            table_insert( tmptbl[ cat ], Msg .. msg_showrel_03 .. i .. msg_showrel_04 .. when .. msg_showrel_05 .. title .. msg_showrel_05 .. msg_showrel_02 .. who .. "" )
+            cunt = cunt + 1
+          end
+        end
+      end
+      for a, b in pairs( tmptbl ) do
+        Msg = Msg .. "\n" .. a .. "\n" .. msg_showrel_06 .. "" .. table_concat( b ) .. "\n"
+      end
+      FreshStuff.MsgAll = utf_format( msg_showrel_07, cunt, Msg )
+    end
   end
 end
 
@@ -1060,6 +1119,10 @@ end
 
 function FreshStuff.DelCrap( user, data, env )
   local _, _, what = string_find( data, "%S+%s+(.+)" )
+  if not what then
+    SendTxt( user, env, botname(), msg_add_crap_07 )
+    return
+  end
   local id = tonumber( what )
   if ( id and type( id ) == "number" ) then
     local cnt, x = 0, os.clock()
@@ -1085,7 +1148,35 @@ function FreshStuff.DelCrap( user, data, env )
       SendTxt( user, env, botname(), msg_del_crap_04 .. cnt .. msg_del_crap_05 .. os.clock() - x )
     end
   else
-    SendTxt( user, env, botname(), msg_add_crap_07 )
+    -- fixed for luadch/scripts#18: support delete by release name when
+    -- the argument isn't numeric. Falls through to a full-title match
+    -- against AllStuff. Multiple matches (defensive) all get removed.
+    local cnt, x = 0, os.clock()
+    local matches = {}
+    for i, v in pairs( FreshStuff.AllStuff ) do
+      if v and v[ 4 ] == what then
+        matches[ #matches + 1 ] = i
+      end
+    end
+    if #matches == 0 then
+      SendTxt( user, env, botname(), msg_error_04 )
+      return
+    end
+    table_sort( matches )
+    for k = #matches, 1, -1 do
+      local n = matches[ k ]
+      if FreshStuff.AllStuff[ n ] then
+        SendTxt( user, env, botname(), FreshStuff.AllStuff[ n ][ 4 ] .. msg_del_crap_01 )
+        FreshStuff.AllStuff[ n ] = nil
+        cnt = cnt + 1
+      end
+    end
+    if cnt > 0 then
+      FreshStuff.SaveRel()
+      FreshStuff.ReloadRel()
+      refresh_bot()
+      SendTxt( user, env, botname(), msg_del_crap_04 .. cnt .. msg_del_crap_05 .. os.clock() - x )
+    end
   end
 end
 
