@@ -14,8 +14,9 @@ would require a complete rewrite (not just a Lua-5.4 syntax migration).
 
 - 34 total distinct script families
 - 29 T1 (drop-in audit, low-risk migration)
-- 4 T2 (works after non-trivial Lua-5.4 fix)
-- 1 Deferred (etc_txtsend - blocked on bundled `lfs` C library; see entry below)
+- 3 T2 (works after non-trivial Lua-5.4 fix)
+- 1 Blocked-on-hub (`ptx_RSSFeedWatch` - imported but doesn't load until [luadch-ng/luadch#88](https://github.com/luadch-ng/luadch/issues/88) is fixed; tracking issue [luadch-ng/scripts#10](https://github.com/luadch-ng/scripts/issues/10))
+- 1 Deferred (`etc_txtsend` - blocked on bundled `lfs` C library; see entry below)
 - 0 Drop (replaced by core / fundamentally broken)
 - 19 upstream issues mapped to specific scripts
 
@@ -467,17 +468,30 @@ chosen yet; no operator demand observed.
 
 **Function:** Watches RSS/Atom feeds; posts new items to hub.
 
-**Tier:** T2.
+**Tier:** Blocked-on-hub (re-classed from T2).
 
-**Lua-5.4 issues:** None spotted.
+**Lua-5.4 issues:** None spotted in the script itself.
 
-**Sandbox issues:** Uses socket operations (http); verify sandbox allows socket.* API.
+**Sandbox issues:** **Module-level `require("socket.http")` and
+`require("ssl.https")` fail on stock luadch-ng v3.1.x.** The hub bundles
+LuaSocket / LuaSec flat (`lib/luasocket/lua/http.lua` etc.) instead of
+the canonical nested tree (`lib/luasocket/lua/socket/http.lua`). Even
+calling `require("http")` directly doesn't help because http.lua's own
+internal requires (`socket.url`, `socket.headers`) hit the same wall.
+Tracked at [luadch-ng/luadch#88](https://github.com/luadch-ng/luadch/issues/88).
 
 **Overlap with core backlog:** —.
 
 **Upstream issues touching this:** #35 (hide-links setting breaks feed posting).
 
-**Notes:** Largest (1453 lines). v0.11 recent improvements. Needs socket API access verification. T2 due to complexity and external I/O.
+**Notes:** Largest (1453 lines). Imported under PR #11 with explicit
+"blocked-on-hub" disclosure in the file's provenance header so the
+catalog stays complete. Tracking issue [luadch-ng/scripts#10](https://github.com/luadch-ng/scripts/issues/10)
+will close when the hub fix lands and we can validate via cfg.tbl
+injection. The plugin also bundles `slaxml/slaxml.lua` as an XML
+parser dep; operator-side install requires placing that under
+`hub/lib/slaxml/` (until the hub also expands package.path to scan
+`scripts/?/?.lua` - listed as optional follow-up in luadch-ng/luadch#88).
 
 ---
 
