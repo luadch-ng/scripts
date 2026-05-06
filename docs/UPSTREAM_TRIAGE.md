@@ -23,7 +23,6 @@ already-decided items.
 The following imported plugins have open upstream issues that haven't
 been triaged here yet:
 
-- cmd_pm2offliners: #29, #30, #41
 - etc_mainecho: #5
 - etc_onlinecounter: #19
 - etc_requests: #36, #38, #40
@@ -34,6 +33,75 @@ Plus one upstream issue against an imported plugin that is audit-only:
 - etc_ccpmblocker: #26 (passive-mode CCPM ~85% success rate is a
   protocol-level limitation, not a code bug; will be recorded as
   Won't-fix when its turn comes)
+
+---
+
+## cmd_pm2offliners
+
+All three open upstream issues are **already addressed** by the
+luadch-ng modernisation; no script-side code change needed. Doc-only
+triage entry.
+
+### luadch/scripts#29 - Can't send offline PM even if the user is offline
+
+**Status:** Already addressed (hub-side reliability).
+
+**Symptom (upstream):** "User is already online." reply on `+pm add`
+even when the user is offline. Workaround: `+reload`. Hours-long
+delay before working again.
+
+**Root cause (upstream):** The script gates the add via
+`profile.is_online == 0` (`cmd_pm2offliners.lua:170`). The upstream
+hub didn't reliably clear `profile.is_online` on every disconnect
+path - particularly abnormal TCP disconnects could leave the flag
+stuck at 1 indefinitely. `+reload` rebuilt `_regusers` from disk,
+zeroing the flag.
+
+**Why already addressed in luadch-ng v3.1.x:** Our hub clears
+`profile.is_online = 0` synchronously at the canonical disconnect
+path (`core/hub.lua:1296`) alongside `_usernicks[nick] = nil`
+(`core/hub.lua:1051`). Both run as part of the same disconnect
+function so they stay in sync. Abnormal TCP disconnects detected by
+the socket layer in `core/server.lua` propagate to the same
+disconnect function, so the "stuck flag" upstream symptom can't
+recur. No script change needed; the `profile.is_online == 0` check
+is reliable here.
+
+### luadch/scripts#30 - cmd_pm2offliners.lua - no minlevel or oplevel
+
+**Status:** Already addressed (Phase 6c-1 cfg layout).
+
+**Symptom (upstream):** "When cmd_pm2offliners.lua was removed from
+cfg.tbl it is no longer possible to set any restrictions." The four
+settings (`cmd_pm2offliners_minlevel`, `_oplevel`, `_delay`,
+`_advanced_rc`) had no defaults in the upstream layout.
+
+**Why already addressed in luadch-ng v3.1.x:** Phase 6c-1
+(luadch-ng/luadch PR #41) extracted all `_defaultsettings` out of
+`core/cfg.lua` into a dedicated `core/cfg_defaults.lua`. The four
+`cmd_pm2offliners_*` keys ship there with sane defaults (minlevel=30,
+oplevel=100, delay=7, advanced_rc=false). `cfg.get(key)` falls back to
+`_defaultsettings[key][1]` when the operator's `cfg/cfg.tbl` doesn't
+override - same convention as every other cfg-aware plugin. Operators
+who want different values add the keys to `cfg/cfg.tbl`; no
+core-file edits required.
+
+### luadch/scripts#41 - settings really be in core/cfg.lua?
+
+**Status:** Already addressed (Phase 6c-1 cfg layout).
+
+**Symptom (upstream):** "Files in the core folder are not files you
+should edit manual." The upstream luadch had the cmd_pm2offliners
+defaults inlined in `core/cfg.lua`, which is core code; operators
+who wanted different values had to edit core or guess the cfg.tbl
+overrides.
+
+**Why already addressed in luadch-ng v3.1.x:** Same layout fix as #30
+above. Defaults live in `core/cfg_defaults.lua` (still core, still
+not user-editable - that's correct), but operator overrides go in
+`cfg/cfg.tbl` (user-editable), which is the standard luadch-ng
+convention. The upstream criticism ("must edit core") doesn't apply
+to our layout.
 
 ---
 
