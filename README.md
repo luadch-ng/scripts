@@ -12,6 +12,10 @@ script, audit it for Lua 5.4 compatibility, fix bugs that were tracked
 upstream, and add a provenance header preserving the original-author
 credit.
 
+## Attention ⚠⚠
+Not all scripts have been tested in a production environment. Therefore, they may still contain bugs or not work 100%. 
+Please feel free to report any issues with additional scripts from this repository as an issue in this repository.
+
 ## Layout
 
 Each plugin lives in its own folder under `scripts/`. The folder's
