@@ -65,7 +65,16 @@ local hub_debug = hub.debug
 local check_clients = function( user )
     local user_level = user:level()
     if check_level[ user_level ] then
-        local user_client = hub_escapefrom( user:version() )
+        -- Phase 8a F-INF-1d (luadch-ng/luadch#121): user:version() is
+        -- nil for clients that did not send VE in BINF. Pre-fix,
+        -- hub_escapefrom(nil) (and the subsequent :find on the result)
+        -- could crash depending on the C binding. A client with no VE
+        -- has no version string to match against the blocklist, so
+        -- skip the check entirely - mirrors the "no rule applies"
+        -- semantic for any other missing input.
+        local version = user:version()
+        if not version then return end
+        local user_client = hub_escapefrom( version )
         for k, v in pairs( client_tbl ) do
             if user_client:find( k ) then
                 user:kill( "ISTA 231 " .. hub_escapeto( v ) .. " TL-1 \n" )

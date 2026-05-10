@@ -79,14 +79,21 @@ hub.setlistener("onTimer", {},
  
 function check(user)
     local hn, hr, ho = user:hubs()
-    local open = hn or "unbekannt"
+    -- Phase 8a F-INF-1d (luadch-ng/luadch#121): hn is nil when the
+    -- client did not send HN in BINF. Pre-fix used the string
+    -- "unbekannt" as a fallback, but then `(open > 0)` compared the
+    -- string to a number and Lua 5.4 raised "attempt to compare
+    -- string with number" before the second `(open == "unbekannt")`
+    -- branch could fire. Use nil directly and split the conditions.
     local user_nick = user:nick()
     local user_level = user:level()
     local level = cfg.get("levels")[user_level] or "Unreg"
     local msg =""
-    
+
     if user_level <= maxchecklvl then
-        if (open > 0) or (open == "unbekannt") then         
+        -- Trigger on either: declared open hubs > 0, OR client did
+        -- not declare HN at all (both are operator-relevant signals).
+        if hn == nil or hn > 0 then
             if warnUser then
                 user:reply(badmsg, hub.getbot(), hub.getbot())
             end

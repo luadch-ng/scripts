@@ -83,14 +83,19 @@ hub.setlistener("onTimer", {},
 
 function check(user)
     local hn, hr, ho = user:hubs()
-    local hubs = hn + hr + ho
+    -- Phase 8a F-INF-1d (luadch-ng/luadch#121): a client BINF without
+    -- the HN/HR/HO triplet returns nil from user:hubs(). Pre-fix,
+    -- the arithmetic on the next line crashed with "attempt to
+    -- perform arithmetic on a nil value". Coerce each component to
+    -- 0 so a partial / missing triplet is treated as zero hubs.
+    local hubs = ( hn or 0 ) + ( hr or 0 ) + ( ho or 0 )
     local user_nick = user:nick()
     local user_level = user:level()
     local level = cfg.get("levels")[user_level] or "Unreg"
     local msg = ""
 
     if user_level <= maxchecklvl then
-        if (hubs > maxHubs) then     
+        if (hubs > maxHubs) then
             if warnUser then
                 user:reply(badmsg, hub.getbot(), hub.getbot())
             end
