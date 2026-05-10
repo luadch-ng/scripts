@@ -28,7 +28,7 @@ below for the per-issue disposition. Roll-up:
 | etc_EventAnnouncer | #1 | Fixed (PR #13) |
 | cmd_pm2offliners | #29, #30, #41 | Already addressed (PR #14) |
 | etc_mainecho | #5 | Fixed defensively (PR #15) |
-| etc_onlinecounter | #19 | Fixed (PR #16) |
+| etc_onlinecounter | #19 | Partially fixed - over-correction reverted in PR #23 (luadch-ng/scripts#21) |
 | etc_requests | #38 | Fixed (PR #17) |
 | etc_requests | #40 | Already addressed + feature deferred (PR #17) |
 | etc_requests | #36 | Feature deferred (PR #17) |
@@ -322,19 +322,32 @@ FreeMonth and sets TotalTime = 0; month 2 starts at 0 with FreeMonth
 = 0; if the user doesn't earn `iTUT*60` minutes in month 2, the
 month 3 rollover deducts and they go negative -> blocked.
 
-**Fix (PR #16):**
-- **Always accumulate per-minute** when online, subject to the
-  `MaxTime` cap. Drop the safe-status gate from the accumulator.
-  Safe-month semantics belong at month-rollover, not on per-minute
-  ticks.
-- **Don't wipe TotalTime in the safe-month rollover branch.** Just
-  decrement `FreeMonth` and let the user keep what they earned.
-  iTUT*60 deduction stays suppressed for safe users (that's the
-  actual safe-month semantic).
+**Original fix (PR #16) - over-corrected:**
+- Always accumulate per-minute when online, subject to `MaxTime`.
+- Don't wipe TotalTime in the safe-month rollover branch.
 
-After the fix: a fresh user accumulates real minutes throughout
-their grace month; at next rollover FreeMonth--, no deduction, full
-TotalTime preserved. Subsequent months: standard deduction logic.
+**Revisit (luadch-ng/scripts#21, PR #23):** the second half of the
+fix (no wipe at rollover) is correct - the wipe is a real bug for
+the `+setsafe` flow even though it never bites a fresh user (their
+TotalTime is already 0 during their FreeMonth). The first half
+(remove the accumulator gate) was an over-correction. Sopor (10+
+year operator of the script) confirmed in luadch-ng/scripts#21 that
+the gate is intentional behaviour: a FreeMonth genuinely does not
+count, the user's TotalTime stays at 0 throughout. Upstream
+luadch/scripts#19 was a misreading of the gate as a "stuck at 0"
+bug.
+
+**Current behaviour (PR #23):**
+- Per-minute accumulator gate restored: FreeMonth > 0 (or global
+  safe month) means no TotalTime accumulation, matching the
+  Jerker/Kungen original.
+- Wipe-at-rollover stays removed (real bug for `+setsafe`-on-an-
+  established-user flow).
+- New cfg toggle `bAccumulateDuringSafeMonth = false` (default).
+  Operators who want the "bank free time" semantic (the over-
+  corrected PR #16 behaviour) flip it to true.
+- Users with negative TotalTime (already blocked) always accumulate
+  so they can recover regardless of FreeMonth status.
 
 ---
 
