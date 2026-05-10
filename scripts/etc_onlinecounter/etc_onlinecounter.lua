@@ -9,14 +9,36 @@
       arithmetic (os.time() - X). Same family of fix as luadch-ng/scripts#6;
       Lua 5.4 strict-checks os.difftime arity.
 
-    Behaviour fix - luadch/scripts#19 (TotalTime stuck at 0 for new users):
-    - Per-minute accumulator no longer gates on FreeMonth status. Always
-      accumulate TotalTime when online (subject to MaxTime cap). Upstream's
-      safe-status gate prevented fresh registrations (which start with
-      FreeMonth=1) from accumulating any TotalTime during their first month.
-    - Month-rollover safe-month branch no longer wipes TotalTime to 0.
-      Users keep their accumulated minutes through a safe month; only the
-      iTUT*60 monthly deduction is suppressed.
+    Behaviour fixes:
+
+    Bug: month-rollover safe-month branch wiped v.TotalTime = 0 (luadch-ng/scripts#21
+    follow-up). The wipe is silent for fresh users (TotalTime is already 0
+    during their FreeMonth), but it bites later: an operator using +setsafe
+    on an established user (e.g. a vacation grant) erases that user's earned
+    online time at the next month rollover. Fix: drop the wipe; safe-month
+    semantics are now "no iTUT*60 deduction" only.
+
+    Per-minute accumulator FreeMonth gate (luadch-ng/scripts#21):
+    The original Jerker/Kungen behaviour - "during a FreeMonth (or a global
+    safe month like December) a user does NOT accumulate TotalTime, the
+    grace month genuinely does not count" - is intentional and matches the
+    +setsafe / new-registration UX 10+ year operators rely on. An earlier
+    fix (commit 37fd345, closing upstream luadch/scripts#19) removed this
+    gate, mistaking it for a "TotalTime stuck at 0" bug. That removal is
+    now reverted.
+
+    For operators who genuinely want the "accumulate-but-do-not-deduct"
+    semantic (i.e. a free month that BANKS time the user can use later),
+    a cfg toggle is provided: bAccumulateDuringSafeMonth = true.
+    Default: false (matches Jerker/Kungen original behaviour).
+
+    Users with negative TotalTime (already blocked) always accumulate so
+    they can recover via online time, regardless of FreeMonth status.
+
+    Lua 5.4 fixes (this fork):
+    - Two sites of 1-arg os.difftime( os.time() - X ) replaced with direct
+      arithmetic (os.time() - X). Same family of fix as luadch-ng/scripts#6;
+      Lua 5.4 strict-checks os.difftime arity.
 ]]--
 
 --[[
@@ -58,7 +80,7 @@
 ]]--
 
 local scriptname = "etc_onlinecounter"
-local scriptversion = "1.3"
+local scriptversion = "1.5"
 
 local tSettings = {
 	-- Bot Name
@@ -90,6 +112,16 @@ local tSettings = {
 
 	--Reset uptime every month
 	bReset = false,
+
+	-- Accumulate TotalTime during a user's FreeMonth (and during a global
+	-- safe month like December) [true = on; false = off]. Default false
+	-- matches the original Jerker/Kungen behaviour where the grace month
+	-- genuinely does not count - the user's TotalTime stays put for the
+	-- duration of FreeMonth and accumulation resumes at the next rollover.
+	-- Set to true if you want a "bank free time" semantic where the user
+	-- accumulates during the grace month and benefits from no deduction
+	-- at rollover (the post-luadch/scripts#19-fix behaviour).
+	bAccumulateDuringSafeMonth = false,
 
 	-- Send hubtime stats on connect [true = on; false = off]
 	bRankOnConnect = false,
@@ -708,13 +740,15 @@ hub.setlistener( "onTimer", { },
 						else
 							--if user has free month count down or remove
 							v.FreeMonth = v.FreeMonth-1
-							-- fixed for luadch/scripts#19: removed v.TotalTime = 0 here.
-							-- With the accumulator fix below the user has been earning real
-							-- minutes during the safe month, so they should keep that progress.
-							-- Safe-month semantics are now "no iTUT*60 deduction" only, not
-							-- "wipe accumulated time".
+							-- Removed `v.TotalTime = 0` here (luadch-ng/scripts#21).
+							-- The wipe is silent for fresh registrations because the
+							-- accumulator gate keeps TotalTime at 0 throughout the
+							-- FreeMonth, but it bites a +setsafe-on-an-established-user
+							-- flow: the operator grants the user a safe month, the next
+							-- rollover wipes their earned online time. Safe-month
+							-- semantics are now "no iTUT*60 deduction" only.
 							OnError(i.." is not checked because "..v.FreeMonthReason.." and have "..v.FreeMonth.." no free month back. (Online time: "..MinutesToTime(v.TotalTime,true)..")")
-							
+
 						end
 						if v.FreeMonth ~= nil and v.FreeMonth <= 0 then
 							v.FreeMonth = nil
@@ -749,19 +783,23 @@ hub.setlistener( "onTimer", { },
             -- Online
 				if hub.isnickonline(v.CurrentNick) then
 					v.SessionTime = v.SessionTime + 1
-					-- fixed for luadch/scripts#19: always accumulate TotalTime
-					-- when online (subject to MaxTime cap). Upstream gated this
-					-- behind safe-status checks (FreeMonth>0, FreeMonth-month),
-					-- so fresh registrations - which start with FreeMonth=1 from
-					-- the onLogin/onStart entry-creation path - never accumulated
-					-- TotalTime during their first month and showed as
-					-- "TotalTime: 0" forever to /myhubtime / /toponline. Safe-
-					-- month semantics belong at month-rollover (iTUT*60 deduction
-					-- is suppressed for users with FreeMonth>0), not on per-minute
-					-- accumulation. The MaxTime cap keeps long-time users from
-					-- overflowing.
+					-- Per-minute TotalTime accumulator (luadch-ng/scripts#21).
+					-- Gate: a user with FreeMonth > 0 OR during a global safe
+					-- month does NOT accumulate, matching the original
+					-- Jerker/Kungen behaviour. Override via the cfg toggle
+					-- bAccumulateDuringSafeMonth (default false).
+					-- Exception: users with negative TotalTime (already
+					-- blocked) always accumulate so they can recover via
+					-- online time. The MaxTime cap keeps long-time users
+					-- from overflowing.
 					if v.TotalTime < tSettings.MaxTime * 60 then
-						v.TotalTime = v.TotalTime + 1
+						local user_safe = ( v.FreeMonth and v.FreeMonth > 0 ) or FreeMonth
+						local accumulate = tSettings.bAccumulateDuringSafeMonth
+							or ( not user_safe )
+							or v.TotalTime < 0
+						if accumulate then
+							v.TotalTime = v.TotalTime + 1
+						end
 					end
 				end
 			end
