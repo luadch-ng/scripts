@@ -1196,7 +1196,8 @@ function FreshStuff.SaveRel()
       parts[ #parts + 1 ] = table_concat( FreshStuff.AllStuff[ i ], "$" ) .. "\n"
     end
   end
-  util.atomic_write( fs_path .. rel_file, table_concat( parts ) )
+  local ok, err = util.atomic_write( fs_path .. rel_file, table_concat( parts ) )
+  if not ok then hub_debug( "ptx_freshstuff: SaveRel failed: " .. tostring( err ) ) end
 end
 
 function FreshStuff.ReloadRel( user, data, env )
@@ -1241,7 +1242,8 @@ function FreshStuff.SaveCt()
     parts[ #parts + 1 ] = "[\"" .. a .. "\"]=\"" .. b .. "\",\n"
   end
   parts[ #parts + 1 ] = "}"
-  util.atomic_write( fs_path .. cat_file, table_concat( parts ) )
+  local ok, err = util.atomic_write( fs_path .. cat_file, table_concat( parts ) )
+  if not ok then hub_debug( "ptx_freshstuff: SaveCt failed: " .. tostring( err ) ) end
 end
 
 function FreshStuff.SaveOptOut()
@@ -1250,7 +1252,8 @@ function FreshStuff.SaveOptOut()
     parts[ #parts + 1 ] = "[\"" .. a .. "\"]=\"" .. b .. "\",\n"
   end
   parts[ #parts + 1 ] = "}"
-  util.atomic_write( fs_path .. optout_file, table_concat( parts ) )
+  local ok, err = util.atomic_write( fs_path .. optout_file, table_concat( parts ) )
+  if not ok then hub_debug( "ptx_freshstuff: SaveOptOut failed: " .. tostring( err ) ) end
 end
 
 function FreshStuff.PruneRel( user, data, env )
