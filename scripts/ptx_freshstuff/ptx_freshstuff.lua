@@ -43,6 +43,11 @@
     util.loadtable(). Phase-7e sandboxed util.loadtable for tampered-
     file resilience; dofile() bypasses that. Behaviour matches upstream;
     a follow-up sweep can switch to util.loadtable for hardening.
+
+    F-PLG-1 (luadch-ng/scripts#24): three SaveX functions now route
+    through util.atomic_write instead of direct io.open(path, "w+").
+    Min hub version: v3.1.7 - util.atomic_write was introduced in
+    luadch-ng/luadch#134.
 ]]--
 
 --[[
@@ -1180,15 +1185,18 @@ function FreshStuff.DelCrap( user, data, env )
   end
 end
 
+-- F-PLG-1 (luadch-ng/scripts#24): atomic write via tmp + rename. The
+-- prior io.open(path, "w+") truncated the file before writing, so a
+-- mid-write crash left an empty or partial releases store on disk.
+-- util.atomic_write is exposed by the hub since v3.1.7 (luadch-ng/luadch#134).
 function FreshStuff.SaveRel()
-  local f = io.open( fs_path .. rel_file, "w+" )
+  local parts = {}
   for i = 1, FreshStuff.Count do
     if FreshStuff.AllStuff[ i ] then
-      f:write( table_concat( FreshStuff.AllStuff[ i ], "$" ) .. "\n" )
+      parts[ #parts + 1 ] = table_concat( FreshStuff.AllStuff[ i ], "$" ) .. "\n"
     end
   end
-  f:flush()
-  f:close()
+  util.atomic_write( fs_path .. rel_file, table_concat( parts ) )
 end
 
 function FreshStuff.ReloadRel( user, data, env )
@@ -1228,23 +1236,21 @@ function FreshStuff.SearchRel( user, data, env )
 end
 
 function FreshStuff.SaveCt()
-  local f = io.open( fs_path .. cat_file, "w+" )
-  f:write( "return {\n" )
-  for a,b in pairs( FreshStuff.Types ) do
-    f:write( "[\"" .. a .. "\"]=\"" .. b .. "\",\n" )
+  local parts = { "return {\n" }
+  for a, b in pairs( FreshStuff.Types ) do
+    parts[ #parts + 1 ] = "[\"" .. a .. "\"]=\"" .. b .. "\",\n"
   end
-  f:write( "}" )
-  f:close()
+  parts[ #parts + 1 ] = "}"
+  util.atomic_write( fs_path .. cat_file, table_concat( parts ) )
 end
 
 function FreshStuff.SaveOptOut()
-  local f = io.open( fs_path .. optout_file, "w+" )
-  f:write( "return {\n" )
-  for a,b in pairs( FreshStuff.OptOutUsers ) do
-    f:write( "[\"" .. a .. "\"]=\"" .. b .. "\",\n" )
+  local parts = { "return {\n" }
+  for a, b in pairs( FreshStuff.OptOutUsers ) do
+    parts[ #parts + 1 ] = "[\"" .. a .. "\"]=\"" .. b .. "\",\n"
   end
-  f:write( "}" )
-  f:close()
+  parts[ #parts + 1 ] = "}"
+  util.atomic_write( fs_path .. optout_file, table_concat( parts ) )
 end
 
 function FreshStuff.PruneRel( user, data, env )
