@@ -147,9 +147,9 @@ local scriptversion = "0.8"
 local scriptlang    = cfg.get( "language" )
 local lang, err     = cfg.loadlanguage( scriptlang, scriptname ); lang = lang or { }; err = err and hub.debug( err )
 local requests_file = "scripts/data/etc_requests.tbl"
-local requests_tbl  = util.loadtable( requests_file )
+local requests_tbl  = util.loadtable( requests_file ) or {}
 local history_file  = "scripts/data/etc_requests_history.tbl"
-local history_tbl   = util.loadtable( history_file )
+local history_tbl   = util.loadtable( history_file ) or {}
 
 --// command
 local cmd                = "request"
