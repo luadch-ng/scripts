@@ -3,6 +3,10 @@
     Audited for Lua 5.4 by Aybo. License: GPLv3.
     See https://github.com/luadch-ng/scripts/blob/master/docs/IMPORT_NOTES.md
     for the import-pass triage.
+
+    Min hub version: v3.1.7 (uses util.savetable's atomic-by-default
+    contract introduced in luadch-ng/luadch#134 - see F-PLG-1 in
+    luadch-ng/scripts#24).
 ]]--
 
 -- Poll.Bot.v.1.3c in LUA 5.1
@@ -128,8 +132,7 @@ local pollold = "scripts/data/ptx_poll_bot_pollold.tbl" -- Hold old polls
 
 local utf_match = utf.match
 local util_loadtable = util.loadtable
-local util_serialize = util.serialize
-local io_open = io.open
+local util_savetable = util.savetable
 local hubcmd
 
 local tLang = util_loadtable( polllang ) or {}
@@ -144,19 +147,11 @@ local OldPolls = util_loadtable( pollold ) or {}
 local teller = 0
 local CurrentPoll ={}
 
-local savetable = function( tbl, name, path )
-    local file, err = io_open( path, "w+" )
-    if file then
-        file:write( "local " .. name .. "\n\n" )
-        util_serialize( tbl, name, file, "" )
-        file:write( "\n\nreturn " .. name )
-        file:close( )
-        return true
-    else
-        out_error( "etc_Poll.Bot.v.3.0.LUA5.1.lua: error in ", path, ": ", err, " (savetable)" )
-        return false, err
-    end
-end
+-- F-PLG-1 (luadch-ng/scripts#24): delegate to util.savetable, which is
+-- atomic-by-default since luadch v3.1.7 (luadch-ng/luadch#134). The
+-- prior local savetable() did a direct io.open(path, "w+") + write +
+-- close, leaving the file truncated on mid-write crash.
+local savetable = util_savetable
 
 --------------------------------------------------------------------
 -- Preloading
