@@ -71,7 +71,7 @@ local utf_format = utf.format
 local util_loadtable = util.loadtable
 
 --// imports
-local echo_tbl = util_loadtable( echo_file )
+local echo_tbl = util_loadtable( echo_file ) or {}
 
 
 ----------
