@@ -23,6 +23,16 @@
       luadch-ng/scripts#6.
     - Seven sites of unpack(...) replaced with table.unpack(...) -
       Lua 5.2+ moved unpack into table.
+    - Three sites of `if loadfile(path) then X = dofile(path) ...`
+      replaced with `util.loadtable(path)` (lines ~489, 490, 742).
+      Required by luadch-ng/luadch#206 Tier-1 (plugin sandbox no
+      longer exposes loadfile / dofile / load). util.loadtable wraps
+      loadfile with a restricted env that rejects executable code
+      in the .dat file, which is strictly stricter than the prior
+      dofile() and matches the broader Phase-7e file-loading
+      contract used by every other state-bearing plugin in the
+      bundle. .dat file format is unchanged (must still return a
+      table literal).
 
     Upstream-issue triage (luadch/scripts):
     - #22 (FIXED): timer "all" trigger broadcast "Command incomplete."
@@ -38,11 +48,11 @@
       timestamp is broadcast first. Configurable via msg_separator (lang
       string) and separator_idle_seconds (script-level constant).
 
-    Sandbox note (not changed): script uses dofile() to load .dat data
-    files (categories, releases, opt-out users) instead of
-    util.loadtable(). Phase-7e sandboxed util.loadtable for tampered-
-    file resilience; dofile() bypasses that. Behaviour matches upstream;
-    a follow-up sweep can switch to util.loadtable for hardening.
+    Sandbox note (DONE 2026-05-23): script now uses util.loadtable()
+    to load .dat data files (categories, releases, opt-out users).
+    Previous dofile() bypassed the Phase-7e restricted-env loader and
+    was removed from the plugin sandbox by luadch-ng/luadch#206 Tier-1,
+    which is what surfaced the migration. .dat format unchanged.
 
     F-PLG-1 (luadch-ng/scripts#24): three SaveX functions now route
     through util.atomic_write instead of direct io.open(path, "w+").
@@ -486,8 +496,11 @@ hub.setlistener( "onStart", { },
         DayChanges = os.date("%x") -- we set current date
     end
 
-    if loadfile( fs_path .. cat_file ) then FreshStuff.Types = dofile( fs_path .. cat_file ) else error( msg_error_01 ) end
-    if loadfile( fs_path .. optout_file ) then FreshStuff.OptOutUsers = dofile( fs_path .. optout_file ) or {} else FreshStuff.OptOutUsers = {} end
+    -- #206 Tier-1 migration: loadfile/dofile -> util.loadtable
+    -- (sandboxed loader; .dat format unchanged, still a Lua table literal).
+    FreshStuff.Types = util.loadtable( fs_path .. cat_file )
+    if not FreshStuff.Types then error( msg_error_01 ) end
+    FreshStuff.OptOutUsers = util.loadtable( fs_path .. optout_file ) or {}
 
     FreshStuff.ReloadRel()
 
@@ -739,7 +752,9 @@ local rel_amount = function()
 end
 
 local cat_amount = function()
-  if loadfile( fs_path .. cat_file ) then FreshStuff.Types = dofile( fs_path .. cat_file ) else error( msg_error_01 ) end
+  -- #206 Tier-1 migration: see onStart-handler note above.
+  FreshStuff.Types = util.loadtable( fs_path .. cat_file )
+  if not FreshStuff.Types then error( msg_error_01 ) end
   local i = 0
   for k, v in pairs ( FreshStuff.Types ) do i = i + 1 end
   return i
