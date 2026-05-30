@@ -1,0 +1,43 @@
+return {
+
+    -- right-click user-command menu (client UI)
+    ucmd_menu          = "Allgemein",
+    ucmd_submenu       = "Tophubbers",
+    ucmd_show_top      = "Zeige Top %d hubbers",
+    ucmd_show_topxy    = "Zeige Top x-y Hubbers",
+    ucmd_input_topxy   = "Zeige Rang x-y",
+    ucmd_show_mytime   = "Zeige deine Onlinezeit",
+    ucmd_show_stats    = "Zeige die Statistik eines Users",
+    ucmd_input_nick    = "Nick",
+    ucmd_show_mystats  = "Zeige meine Statistik",
+
+    -- chat error / info messages
+    msg_no_perm        = "*** Fehler: Dir ist es nicht erlaubt diesen Befehl zu nutzen",
+    msg_aut_warning    = "*** Deine Durchschnitts-Online Zeit (DOT) ist kleiner als %d Stunde(n). Wir planen Einschränkungen einzuführen für User die die vorgeschriebene DOT nicht erreichen!",
+    msg_top_empty      = "*** Fehler: Top Hubbers Tabelle ist zurzeit leer!",
+    msg_hubtime_usage  = "*** Eingabe Fehler: Versuch es wie folgt: !hubtime <nick>",
+    msg_no_entry       = "*** Fehler: Keinen Eintrag gefunden für '%s'!",
+
+    -- top-hubbers table
+    msg_top_header     = "● Aktuelle Tophubbers  ●",
+    msg_top_col_nr     = "Nr.",
+    msg_top_col_time   = "Online Zeit:",
+    msg_top_col_rank   = "Rang:",
+    msg_top_col_status = "Status:",
+    msg_top_col_nick   = "Nick:",
+    msg_top_online     = "*Online*",
+    msg_top_offline    = "*Offline*",
+
+    -- individual stats template
+    msg_stats_header   = "● Statistik von %s ●",
+    msg_stats_nick     = "Nick:",
+    msg_stats_time     = "Onlinezeit:",
+    msg_stats_avg      = "Ø pro Tag:",
+    msg_stats_rank     = "Rang:",
+
+    -- duration format passed to string.format with year/month/day/hour/minute
+    -- integers. NOTE: must keep the "<int> <token>, " segment shape -
+    -- MinutesToTime strips zero-prefixed segments via anchored gsub.
+    fmt_duration       = "%i Jahr(e), %i Monat(e), %i Tag(e), %i Stunde(n), %i Minute(n)",
+
+}

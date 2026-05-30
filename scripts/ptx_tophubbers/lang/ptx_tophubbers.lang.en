@@ -1,0 +1,43 @@
+return {
+
+    -- right-click user-command menu (client UI)
+    ucmd_menu          = "General",
+    ucmd_submenu       = "Tophubbers",
+    ucmd_show_top      = "Show top %d hubbers",
+    ucmd_show_topxy    = "Show top x-y hubbers",
+    ucmd_input_topxy   = "Show rank x-y",
+    ucmd_show_mytime   = "Show your online time",
+    ucmd_show_stats    = "Show user statistics",
+    ucmd_input_nick    = "Nick",
+    ucmd_show_mystats  = "Show my statistics",
+
+    -- chat error / info messages
+    msg_no_perm        = "*** Error: you are not allowed to use this command",
+    msg_aut_warning    = "*** Your daily average online time (AUT) is below %d hour(s). We plan to introduce restrictions for users who fall below the required AUT!",
+    msg_top_empty      = "*** Error: Top Hubbers table is empty",
+    msg_hubtime_usage  = "*** Usage: !hubtime <nick>",
+    msg_no_entry       = "*** Error: no entry found for '%s'",
+
+    -- top-hubbers table
+    msg_top_header     = "● Current Top Hubbers ●",
+    msg_top_col_nr     = "Nr.",
+    msg_top_col_time   = "Online time:",
+    msg_top_col_rank   = "Rank:",
+    msg_top_col_status = "Status:",
+    msg_top_col_nick   = "Nick:",
+    msg_top_online     = "*Online*",
+    msg_top_offline    = "*Offline*",
+
+    -- individual stats template
+    msg_stats_header   = "● Statistics for %s ●",
+    msg_stats_nick     = "Nick:",
+    msg_stats_time     = "Online time:",
+    msg_stats_avg      = "Ø per day:",
+    msg_stats_rank     = "Rank:",
+
+    -- duration format passed to string.format with year/month/day/hour/minute
+    -- integers. NOTE: must keep the "<int> <token>, " segment shape -
+    -- MinutesToTime strips zero-prefixed segments via anchored gsub.
+    fmt_duration       = "%i year(s), %i month(s), %i day(s), %i hour(s), %i minute(s)",
+
+}
