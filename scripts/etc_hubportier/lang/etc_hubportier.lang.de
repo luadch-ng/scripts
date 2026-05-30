@@ -1,0 +1,7 @@
+return {
+
+    msg_login         = "ist wieder da...",
+    msg_logout        = "verkrümelt sich jetzt...",
+    msg_user_welcome  = "schön das du wieder hier bist...",
+
+}
