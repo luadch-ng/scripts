@@ -11,14 +11,14 @@
 	-- msgs --
 	addrequestmsg = "\"%s\" was added to wishlist",
 	showrequestmsg = "\nThe Requests: ",
-	deletemsg = "\"%s\" was deletet from wishlist",
+	deletemsg = "\"%s\" was deleted from wishlist",
     amountmsg = "[[Wishes]]--> %s items have been added to the wishlist, go and check them out",
 
 
 	-- ucmd menu --
-	ucmd_menu_add = { "Generel", "Whishes", "add" },
-	ucmd_menu_show = { "Generel", "Whishes", "show" },
-	ucmd_menu_delete = { "Generel", "Whishes", "delete" },
+	ucmd_menu_add = { "General", "Wishes", "add" },
+	ucmd_menu_show = { "General", "Wishes", "show" },
+	ucmd_menu_delete = { "General", "Wishes", "delete" },
 	ucmd_what = "Enter your request:",
 	ucmd_which = "Enter the request number:",
 

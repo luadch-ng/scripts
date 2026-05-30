@@ -36,11 +36,11 @@ msg_new_member = "The following user was added as member: ",
 msg_welcome = "Welcome ",
 msg_already = "The following user is already a member: ",
 msg_isbot = "User is a bot",
-msg_del = "The followig user is no longer a member: ",
+msg_del = "The following user is no longer a member: ",
 msg_del_2 = "You are no longer a member of this chat.",
 msg_nomember = "The following user is not a member: ",
 msg_intro = "\t\t\t\t   The last %s posts from chat:",
-msg_pm2ops_user = "The following message was send to all members of this Chat: ",
+msg_pm2ops_user = "The following message was sent to all members of this Chat: ",
 
 msg_members = [[
 

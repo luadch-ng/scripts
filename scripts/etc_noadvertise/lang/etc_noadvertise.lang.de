@@ -28,7 +28,7 @@
     msg_del_forbidden_1 = "noAdvertise  |  verbotenen String entfernt: ",
     msg_del_forbidden_2 = "noAdvertise  |  verbotener String wurde nicht gefunden: ",
     msg_show_allowed = "noAdvertise  |  erlaubte Strings:\n\n",
-    msg_add_allowed_1 = "noAdvertise  |  erlaubter String bereits verhanden: ",
+    msg_add_allowed_1 = "noAdvertise  |  erlaubter String bereits vorhanden: ",
     msg_add_allowed_2 = "noAdvertise  |  erlaubter String hinzugefügt: ",
     msg_del_allowed_1 = "noAdvertise  |  erlaubter String entfernt: ",
     msg_del_allowed_2 = "noAdvertise  |  erlaubter String wurde nicht gefunden: ",

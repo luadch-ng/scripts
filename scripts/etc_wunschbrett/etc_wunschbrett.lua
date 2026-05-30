@@ -79,16 +79,16 @@ local nonumber = lang.nonumber or "No number entered"
 -- msgs --
 local addrequestmsg = lang.addrequestmsg or  "%s was added to wishlist"
 local showrequestmsg = lang.showrequestmsg or  "\nThe Requests: "
-local deletemsg = lang.deletemsg or  "%s was deletet from wishlist"
+local deletemsg = lang.deletemsg or  "%s was deleted from wishlist"
 local amountmsg = lang.amountmsg or "[[Wishes]]--> %s items have been added to the wishlist, go and check them out"
 
 
 -- ucmd menu --
-local ucmd_menu_add = lang.ucmd_menu_add or { "Generel", "Wishes", "add" }
-local ucmd_menu_show = lang.ucmd_menu_show or { "Generel", "Wishes", "show" }
-local ucmd_menu_delete = lang.ucmd_menu_delete or { "Generel", "Wishes", "delete" }
+local ucmd_menu_add = lang.ucmd_menu_add or { "General", "Wishes", "add" }
+local ucmd_menu_show = lang.ucmd_menu_show or { "General", "Wishes", "show" }
+local ucmd_menu_delete = lang.ucmd_menu_delete or { "General", "Wishes", "delete" }
 local ucmd_what = lang.ucmd_what or "Enter your request:"
-local ucmd_which = lang.ucmd_who or "Enter the request number:"
+local ucmd_which = lang.ucmd_which or "Enter the request number:"
 
 local by = lang.by or "added by"
 

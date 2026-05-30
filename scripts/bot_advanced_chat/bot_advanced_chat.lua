@@ -148,11 +148,11 @@ local msg_new_member = lang.msg_new_member or "The following user was added as m
 local msg_welcome = lang.msg_welcome or "Welcome "
 local msg_already = lang.msg_already or "The following user is already a member: "
 local msg_isbot = lang.msg_isbot or "User is a bot"
-local msg_del = lang.msg_del or "The followig user is no longer a member: "
+local msg_del = lang.msg_del or "The following user is no longer a member: "
 local msg_del_2 = lang.msg_del_2 or "You are no longer a member of this chat."
 local msg_nomember = lang.msg_nomember or "The following user is not a member: "
 local msg_intro = lang.msg_intro or "\t\t\t\t   The last %s posts from chat:"
-local msg_pm2ops_user = lang.msg_pm2ops_user or "The following message was send to all members of this Chat: "
+local msg_pm2ops_user = lang.msg_pm2ops_user or "The following message was sent to all members of this Chat: "
 
 local msg_members = lang.msg_members or [[
 

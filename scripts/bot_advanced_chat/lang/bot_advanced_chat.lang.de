@@ -4,7 +4,7 @@ help_title = "Advanced Chat",
 help_desc = "Chat mit erweiterten Funktionen",
 
 msg_help_1 = "  [+!#]help \t | Liste aller verfügbaren Befehle",
-msg_help_2 = "  [+!#]members \t | List aller Mitglieder",
+msg_help_2 = "  [+!#]members \t | Liste aller Mitglieder",
 msg_help_3 = "  [+!#]history \t | Die letzten Posts anzeigen",
 msg_help_4 = "  [+!#]historyall \t | Alle gespeicherten Posts anzeigen",
 

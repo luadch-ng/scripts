@@ -422,7 +422,7 @@ The Top  %s  Releasers are:
   ]]
 
 local help_title = lang.help_title or "ptx_freshstuff.lua"
-local help_usage = lang.msg_help or [[
+local help_usage = lang.msg_usage or [[
 
 
 =============================================================================
@@ -442,7 +442,7 @@ local help_usage = lang.msg_help or [[
 =============================================================================
   ]]
 
-local help_desc = lang.help_desc or "Multifunctional release bot"
+local help_desc = lang.msg_desc or "Multifunctional release bot"
 
 local msg_optout = lang.msg_optout or "Releases are turned off"
 local msg_already_optout = lang.msg_already_optout or "You have already turned off releases"
