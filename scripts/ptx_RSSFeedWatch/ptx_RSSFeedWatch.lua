@@ -102,9 +102,42 @@
 ]]
 
 --//--
-local scriptname = "RSSFeedWatch"
-local scriptversion = "0.11"
+
+--[[
+
+    ptx_RSSFeedWatch (luadch-ng fork)
+
+        v0.12:
+            - i18n: route the user-facing chat / ucmd / command-help /
+              "New Feed" header strings through cfg.loadlanguage. New
+              lang files at scripts/ptx_RSSFeedWatch/lang/ptx_RSSFeedWatch.lang.{de,en}
+              (119 keys, structure-identical EN+DE). Adds German
+              translation.
+            - Display-layout texts (the settings table contents, the
+              lastfeed/listfeeds/listusers column outputs) keep their
+              English column structure; only column HEADERS and
+              standalone status messages are localised. This is the
+              partial-i18n compromise for a 1472-LoC plugin: covers
+              the user-visible chat surface, defers structural-text
+              layout rewrites to a future iteration.
+            - The cmd / subcommand-trigger word "rss" plus its sub-
+              command names (feeds / lastfeed / addfeed / forcefeed /
+              delfeed / refresh / maxfeeds / maxcache / maxwidth /
+              getfeed / mutefeed / focefeedpm / msgtopm / simple /
+              feedhelp / settings / listfeeds / listusers) stay
+              English in both lang files - they are user-typed
+              command words, not display labels.
+              Part of luadch-ng/scripts #31 PR-7.
+
+]]--
+
+local scriptname = "ptx_RSSFeedWatch"
+local scriptversion = "0.12"
+local display_name = "RSSFeedWatch" -- shown in chat headers / ucmd labels
 local cmd = "rss"
+
+local scriptlang = cfg.get( "language" )
+local lang, err = cfg.loadlanguage( scriptlang, scriptname ); lang = lang or {}; err = err and hub.debug( err )
 
 --// imports
 local help, ucmd, hubcmd
@@ -117,8 +150,8 @@ local https = require("ssl.https")
 assert(https,"Failed to load https module. Check files.")
 
 local cmd_text ="[+!#]rss "
-local msg_usage = "Usage: [+!#]rss cmd, type [+!#]rss feedhelp for further instructions."
-local msg_denied = "You are not allowed to use this command."
+local msg_usage = lang.msg_usage or "Usage: [+!#]rss cmd, type [+!#]rss feedhelp for further instructions."
+local msg_denied = lang.msg_denied or "You are not allowed to use this command."
 
 local hub_broadcast = hub.broadcast
 local hub_sendtoall = hub.sendtoall
@@ -147,30 +180,32 @@ local Params = {
 	["feed"] = "",
 	}
 
-local ucmd_menu_help = { "RSSFeedWatch", "Show help" }
-local ucmd_menu_feeds = { "RSSFeedWatch", "Set feed settings" }
-local ucmd_menu_lastfeed = { "RSSFeedWatch", "Show last feeds" }
-local ucmd_menu_listusers = { "RSSFeedWatch", "List active feed users" }
-local ucmd_menu_listfeeds = { "RSSFeedWatch", "List available feeds" }
-local ucmd_menu_addfeed = { "RSSFeedWatch", "Add a feed" }
-local ucmd_menu_forcefeed = { "RSSFeedWatch", "Toggle force feed" }
-local ucmd_menu_deletefeed = { "RSSFeedWatch", "Delete a feed" }
-local ucmd_menu_getfeed = { "RSSFeedWatch", "Get next feed" }
-local ucmd_menu_mutefeed = { "RSSFeedWatch", "Mute//Unmute a feed" }
-local ucmd_menu_refresh = { "RSSFeedWatch", "Settings", "Set feed refresh" }
-local ucmd_menu_maxfeeds = { "RSSFeedWatch", "Settings", "Set feeds to show" }
-local ucmd_menu_maxcache = { "RSSFeedWatch", "Settings", "Set feeds to cache" }
-local ucmd_menu_maxwidth = { "RSSFeedWatch", "Settings", "Set max width" }
-local ucmd_menu_focefeedpm = { "RSSFeedWatch", "Settings", "Toggle forced feeds to PM" }
-local ucmd_menu_msgtopm = { "RSSFeedWatch", "Settings", "Toggle messages to PM" }
-local ucmd_menu_simple = { "RSSFeedWatch", "Settings", "Toggle simple display" }
-local ucmd_menu_settings = { "RSSFeedWatch", "Settings", "Show settings" }
+local ucmd_root = lang.ucmd_menu_root or "RSSFeedWatch"
+local ucmd_group_settings = lang.ucmd_menu_settings_group or "Settings"
+local ucmd_menu_help = { ucmd_root, lang.ucmd_label_help or "Show help" }
+local ucmd_menu_feeds = { ucmd_root, lang.ucmd_label_feeds or "Set feed settings" }
+local ucmd_menu_lastfeed = { ucmd_root, lang.ucmd_label_lastfeed or "Show last feeds" }
+local ucmd_menu_listusers = { ucmd_root, lang.ucmd_label_listusers or "List active feed users" }
+local ucmd_menu_listfeeds = { ucmd_root, lang.ucmd_label_listfeeds or "List available feeds" }
+local ucmd_menu_addfeed = { ucmd_root, lang.ucmd_label_addfeed or "Add a feed" }
+local ucmd_menu_forcefeed = { ucmd_root, lang.ucmd_label_forcefeed or "Toggle force feed" }
+local ucmd_menu_deletefeed = { ucmd_root, lang.ucmd_label_deletefeed or "Delete a feed" }
+local ucmd_menu_getfeed = { ucmd_root, lang.ucmd_label_getfeed or "Get next feed" }
+local ucmd_menu_mutefeed = { ucmd_root, lang.ucmd_label_mutefeed or "Mute//Unmute a feed" }
+local ucmd_menu_refresh = { ucmd_root, ucmd_group_settings, lang.ucmd_label_refresh or "Set feed refresh" }
+local ucmd_menu_maxfeeds = { ucmd_root, ucmd_group_settings, lang.ucmd_label_maxfeeds or "Set feeds to show" }
+local ucmd_menu_maxcache = { ucmd_root, ucmd_group_settings, lang.ucmd_label_maxcache or "Set feeds to cache" }
+local ucmd_menu_maxwidth = { ucmd_root, ucmd_group_settings, lang.ucmd_label_maxwidth or "Set max width" }
+local ucmd_menu_focefeedpm = { ucmd_root, ucmd_group_settings, lang.ucmd_label_focefeedpm or "Toggle forced feeds to PM" }
+local ucmd_menu_msgtopm = { ucmd_root, ucmd_group_settings, lang.ucmd_label_msgtopm or "Toggle messages to PM" }
+local ucmd_menu_simple = { ucmd_root, ucmd_group_settings, lang.ucmd_label_simple or "Toggle simple display" }
+local ucmd_menu_settings = { ucmd_root, ucmd_group_settings, lang.ucmd_label_settings or "Show settings" }
 
 local minlevel = 10 -- local min level to use rss command, each command has its own min level settings
 local Bot
 -- Name of the bot
 local BotName = "[--=FeedBot=--]"
-local BotDescription = "RSSFeedWatch"
+local BotDescription = lang.bot_desc or "RSSFeedWatch"
 -- Start with which feed?
 local StartFeed = 1
 -- Set the socket timeout value, in seconds
@@ -216,26 +251,22 @@ local Feeds = util_loadtable( FeedsFile ) or { }
 	{ url="https://github.com/luadch/luadch/releases.atom", tag="Luadch", force=false },
 }--]]
 
--- Body style
-local Body = [[
-
-
-=== FeedWatch =======================================================================================
-%s
-======================================================================================= FeedWatch ===
-  ]]
+-- Body style. The "FeedWatch" decoration label is localised via lang.label_feedwatch_body.
+local _body_label = lang.label_feedwatch_body or "FeedWatch"
+local Body = "\n\n=== ".._body_label.." =======================================================================================\n%s\n======================================================================================= ".._body_label.." ===\n  "
 
 local encoding = "UTF-8"
 
--- Change Feed text formats here
+-- Change Feed text formats here. The "New Feed(s)" header line is localised via
+-- lang.label_new_feed_header_{simple,pretty} with %s placeholders for count / plural / name.
 local formatFeedText = function()
 	local FeedText
+	local hdr_simple = lang.label_new_feed_header_simple or "[ %s ] New Feed%s from: %s"
+	local hdr_pretty = lang.label_new_feed_header_pretty or "[ %s ] New Feed%s from: %s"
 	if tSettings.Simple then
-		-- Simple Feed text format
-		FeedText = "[ "..Params["count"].." ] New Feed"..Params["plural"].." from: "..Params["name"].."\r\n"..Params["feed"]
+		FeedText = utf_format(hdr_simple, Params["count"], Params["plural"], Params["name"]).."\r\n"..Params["feed"]
 	else
-		--Feed text format ( if not Simple enabled )
-		FeedText = "\r\n\r\n\t [ "..Params["count"].." ] New Feed"..Params["plural"].." from: "..Params["name"].."\r\n\r\n"..Params["feed"]
+		FeedText = "\r\n\r\n\t "..utf_format(hdr_pretty, Params["count"], Params["plural"], Params["name"]).."\r\n\r\n"..Params["feed"]
 	end
 	return FeedText
 end
@@ -583,12 +614,12 @@ GetFeed = function(n)
 		local msg_
 		encoding = GetEncoding(fd)
 		msg_ = ParseFeed(ToUtf8(fd, encoding), n)
-		local td,plural = socket.gettime()-st,"of a second."
-		if td > 1 then plural = "seconds." end
+		local td,plural = socket.gettime()-st,(lang.val_part_second or "of a second.")
+		if td > 1 then plural = (lang.val_seconds or "seconds.") end
 		local time = utf_format("%.2f "..plural,td)
 
 		if msg_ and utf_len(msg_) > 0 then
-			if not tSettings.Simple then msg_ = msg_.."\t Processed In: "..time.."\n\n" end
+			if not tSettings.Simple then msg_ = msg_.."\t "..(lang.label_processed_in or "Processed In:").." "..time.."\n\n" end
 			if Feeds[n].force then
 				if tSettings.ForceFeedPM then
 					hub_broadcast(utf_format( Body, msg_ ), Bot, Bot)
@@ -625,13 +656,13 @@ FwCmds = {
 		if user then
 			local choice = data
 			if choice then
-				local t = {["on"] = true,["off"] = {true,false},["m"] = "main chat",["p"] = "private message"}
+				local t = {["on"] = true,["off"] = {true,false},["m"] = (lang.val_main_chat or "main chat"),["p"] = (lang.val_pm or "private message")}
 				if t[choice] then
 					local b,save = ChkUsers(user:nick())
-					local tab = {["true"] = "enabled",["false"] = "disabled"}
+					local tab = {["true"] = (lang.val_enabled or "enabled"),["false"] = (lang.val_disabled or "disabled")}
 					if not b then
 						if choice == "off" then
-							return user:nick()..", feeds are already disabled for you.", private
+							return utf_format(lang.msg_feeds_already_disabled or "%s, feeds are already disabled for you.", user:nick()), private
 						end
 						local channel = "p"
 						if choice == "m" then
@@ -648,7 +679,7 @@ FwCmds = {
 					else
 						if choice == "on" then
 							if Users[b][3] then
-								return user:nick()..", feeds are already enabled for you and will be sent in "..t[Users[b][2]], private
+								return utf_format(lang.msg_feeds_already_enabled or "%s, feeds are already enabled for you and will be sent in %s", user:nick(), t[Users[b][2]]), private
 							else
 								Users[b][3] = t[choice]
 								save = true
@@ -656,7 +687,7 @@ FwCmds = {
 							end
 						elseif choice == "off" then
 							if not Users[b][3] then
-								return user:nick()..", feeds are already disabled for you and will be sent in "..t[Users[b][2]].." when enabled.", private
+								return utf_format(lang.msg_feeds_already_disabled_set or "%s, feeds are already disabled for you and will be sent in %s when enabled.", user:nick(), t[Users[b][2]]), private
 							else
 								Users[b][3] = t[choice][2]
 								save = true
@@ -664,7 +695,7 @@ FwCmds = {
 							end
 						else
 							if Users[b][2] == choice then
-								return user:nick()..", feeds are already set for "..t[choice].." and are curretly "..tab[tostring(Users[b][3])], private
+								return utf_format(lang.msg_feeds_already_set_type or "%s, feeds are already set for %s and are currently %s", user:nick(), t[choice], tab[tostring(Users[b][3])]), private
 							else
 								Users[b][2] = choice
 								save = true
@@ -674,34 +705,34 @@ FwCmds = {
 					if save then
 						SaveFile(UserFile,Users,"Users")
 					end
-					return "Feeds are currently "..tab[tostring(Users[b][3])].." current message type: "..t[Users[b][2]], private
+					return utf_format(lang.msg_feeds_current or "Feeds are currently %s current message type: %s", tab[tostring(Users[b][3])], t[Users[b][2]]), private
 				else
-					return "**Error in selection. Usage: "..cmd_text..cmd2.." <on/off/p/m>", private
+					return utf_format(lang.msg_feeds_error_selection or "**Error in selection. Usage: %s%s <on/off/p/m>", cmd_text, cmd2), private
 				end
 			else
-				return "Error in selection. Usage: "..cmd_text..cmd2.." <on/off/p/m>", private
+				return utf_format(lang.msg_feeds_usage_selection or "Error in selection. Usage: %s%s <on/off/p/m>", cmd_text, cmd2), private
 			end
 		else
-			return "Set your RSS feed option",
-			" %[line:on=enabled, off= disabled, m=main, p=pm]",
-			" %[line:on=enabled, off= disabled, m=main, p=pm]"
+			return (lang.desc_feeds or "Set your RSS feed option"),
+			(lang.ucmd_feeds_input or " %[line:on=enabled, off= disabled, m=main, p=pm]"),
+			(lang.ucmd_feeds_input or " %[line:on=enabled, off= disabled, m=main, p=pm]")
 		end
 	end,
 	{ level = 10 } --min level to use this command
 	},
 	lastfeed = {function(user,data,cmd2,data2,private)
         if not user then
-            return "Show Last feeds of <Feed number>","",""
+            return (lang.desc_lastfeed or "Show Last feeds of <Feed number>"),"",""
         end
 		if not data then
-			return "Usage: [+!#]rss lastfeed <Feed number>", private
+			return (lang.msg_lastfeed_usage or "Usage: [+!#]rss lastfeed <Feed number>"), private
 		end
 		local n = data
 		if n then
 			n = tonumber(n)
 		end
 		if not n then
-			return "Error! ' "..data.." ' is not a valid feed number.", private
+			return utf_format(lang.msg_err_invalid_feed_number or "Error! '%s' is not a valid feed number.", data), private
 		end
 
 		if n and n > 0 then
@@ -727,17 +758,17 @@ FwCmds = {
 								end
 							end
 						end
-						return "\n\n\t[ "..tostring(cnt).." ] Cached feed"..
+						return "\n\n\t[ "..tostring(cnt).." ] "..(lang.label_cached_feed or "Cached feed")..
 						plural.." from: "..Feeds[n].url.."\n\n"..reply.."\n", PM
 					end
 				else
-					return "There are no cached feeds at this time.", private
+					return (lang.msg_lastfeed_no_cache or "There are no cached feeds at this time."), private
 				end
 			else
-				return "Error! "..tostring(n).." is not a valid feed number.", private
+				return utf_format(lang.msg_err_invalid_feed_number or "Error! '%s' is not a valid feed number.", tostring(n)), private
 			end
 		else
-			return "Error! "..tostring(n).." is not a valid feed number.", private
+			return utf_format(lang.msg_err_invalid_feed_number or "Error! '%s' is not a valid feed number.", tostring(n)), private
 		end
 	end,
 	{ level = 10 } --min level to use this command
@@ -751,7 +782,7 @@ FwCmds = {
 					local ismuted = ""
 					if v.force == false then
 						if u and Users[u][4] and Users[u][4][i] then
-							ismuted = " (muted)"
+							ismuted = (lang.msg_listfeeds_muted or " (muted)")
 						end
 					end
 					reply = reply.."\t"..utf_format("[%-2s]    ",i)..v.tag..ismuted.."\n"
@@ -768,13 +799,13 @@ FwCmds = {
 							end
 						end
 					end
-					return "Listing enabled feeds:\n\n"..reply, PM
+					return (lang.msg_listfeeds_header or "Listing enabled feeds:\n\n")..reply, PM
 				end
 			else
-				return "Error, There are no feeds set in script.", private
+				return (lang.msg_listfeeds_empty or "Error, There are no feeds set in script."), private
 			end
 		else
-			return "List Enabled Feeds","",""
+			return (lang.desc_listfeeds or "List Enabled Feeds"),"",""
 		end
 	end,
 	{ level = 10 } --min level to use this command
@@ -782,10 +813,10 @@ FwCmds = {
 	listusers = {function(user,data,cmd2,data2,private)
 		if user then
 			local r = "-"
-			local reply,t,c = "\n\n\t"..scriptname.." Active Users\n\n\t"..string_rep(r,50).."\r\n"..
-			"\tNickname\t\tMessage Type\tStatus\r\n\t"..string_rep(r,50).."\r\n",{},""
-			local tab = {["true"] = "enabled",["false"] = "disabled",
-			["m"] = "main chat      ",["p"] = "private message"}
+			local reply,t,c = "\n\n\t"..display_name..(lang.label_listusers_active or " Active Users").."\n\n\t"..string_rep(r,50).."\r\n"..
+			"\t"..(lang.label_listusers_nickname or "Nickname").."\t\t"..(lang.label_listusers_msgtype or "Message Type").."\t"..(lang.label_listusers_status or "Status").."\r\n\t"..string_rep(r,50).."\r\n",{},""
+			local tab = {["true"] = (lang.val_enabled or "enabled"),["false"] = (lang.val_disabled or "disabled"),
+			["m"] = (lang.val_main_chat or "main chat      "),["p"] = (lang.val_pm or "private message")}
 			for i,v in ipairs(Users) do
 				push(t,"\t"..utf_format("%-30s",v[1]).."\t"..
 				tab[v[2]].."\t"..tab[tostring(v[3])].."\r\n")
@@ -808,15 +839,15 @@ FwCmds = {
 				return reply..c.."\n\t"..string_rep(r,50).."\r\n\r\n", PM
 			end
 		else
-			return "List Active Feed Users","",""
+			return (lang.desc_listusers or "List Active Feed Users"),"",""
 		end
 	end,
 	{ level = 10 } --min level to use this command
 	},
 	feedhelp = {function(user,data,cmd2,data2,private)
 		if user then
-			local reply,t,c = "\n\n\t"..scriptname.." Command Help\n\n\tCommand"..
-			"\t\tDescription\r\n\t"..string_rep("-",50).."\r\n",{},""
+			local reply,t,c = "\n\n\t"..display_name..(lang.label_feedhelp_header_a or " Command Help").."\n\n\t"..(lang.label_feedhelp_header_b or "Command")..
+			"\t\t"..(lang.label_feedhelp_header_c or "Description").."\r\n\t"..string_rep("-",50).."\r\n",{},""
 			for i,v in ipairs(Order) do
 				local desc,args = FwCmds[v][1]()
 				if user:level() >= FwCmds[v][2]["level"] then
@@ -846,7 +877,7 @@ FwCmds = {
 				return reply..c.."\n\t"..string_rep("-",50).."\r\n\r\n", PM
 			end
 		else
-			return scriptname.." Help","",""
+			return display_name..(lang.desc_feedhelp or " Help"),"",""
 		end
 	end,
 	{ level = 10 } --min level to use this command
@@ -855,14 +886,14 @@ FwCmds = {
 	addfeed = {function(user,data,cmd2,data2,private)
 		if user then
 			if (not data) or (not data2) then
-				return "Usage: [+!#]rss addfeed <Url> <Tag>", private
+				return (lang.msg_addfeed_usage or "Usage: [+!#]rss addfeed <Url> <Tag>"), private
 			end
 			for i,v in ipairs(Feeds) do
 				if v.url == data then
-					return "Feed with url "..data.." already exists.", private
+					return utf_format(lang.msg_addfeed_dup_url or "Feed with url %s already exists.", data), private
 				end
 				if v.tag == data2 then
-					return "Feed with tag "..data2.." already exists.", private
+					return utf_format(lang.msg_addfeed_dup_tag or "Feed with tag %s already exists.", data2), private
 				end
 			end
 			local host = data2 or utf_gsub(utf_gsub(data, "^[hftps:]+[/]+", ""), "/.*$", "") or "unavailable"
@@ -886,9 +917,9 @@ FwCmds = {
 				end
 			end
 			SaveFile(UserFile,Users,"Users")
-			return "New feed added.", private
+			return (lang.msg_addfeed_ok or "New feed added."), private
 		else
-			return "Add new RSS feed <Url> <Tag>",
+			return (lang.desc_addfeed or "Add new RSS feed <Url> <Tag>"),
 			"",
 			""
 		end
@@ -899,32 +930,32 @@ FwCmds = {
 	forcefeed = {function(user,data,cmd2,data2,private)
 		if user then
 			if not data then
-				return "Usage: [+!#]rss forcefeed <Feed number>", private
+				return (lang.msg_forcefeed_usage or "Usage: [+!#]rss forcefeed <Feed number>"), private
 			end
 			local n = data
 			if n then
 				n = tonumber(n)
 			end
 			if not n then
-				return "Error! ' "..data.." ' is not a valid feed number.", private
+				return utf_format(lang.msg_err_invalid_feed_number or "Error! '%s' is not a valid feed number.", data), private
 			end
 
 			if n and n > 0 then
 				if Feeds[n] then
 					local reply
-					local tab = {["true"] = "enabled",["false"] = "disabled"}
+					local tab = {["true"] = (lang.val_enabled or "enabled"),["false"] = (lang.val_disabled or "disabled")}
 					Feeds[n].force = not Feeds[n].force
-					reply = "ForceFeed is now "..tab[tostring(Feeds[n].force)].." for "..Feeds[n].tag.." ("..tostring(n)..")."
+					reply = utf_format(lang.msg_forcefeed_set or "ForceFeed is now %s for %s (%s).", tab[tostring(Feeds[n].force)], Feeds[n].tag, tostring(n))
 					SaveFeed()
 					return reply, private
 				else
-					return "Error! "..tostring(n).." is not a valid feed number.", private
+					return utf_format(lang.msg_err_invalid_feed_number or "Error! '%s' is not a valid feed number.", tostring(n)), private
 				end
 			else
-				return "Error! "..tostring(n).." is not a valid feed number.", private
+				return utf_format(lang.msg_err_invalid_feed_number or "Error! '%s' is not a valid feed number.", tostring(n)), private
 			end
 		else
-			return "Toggle force feed on <Feed number>",
+			return (lang.desc_forcefeed or "Toggle force feed on <Feed number>"),
 			"",
 			""
 		end
@@ -935,14 +966,14 @@ FwCmds = {
 	delfeed = {function(user,data,cmd2,data2,private)
 		if user then
 			if not data then
-				return "Usage: [+!#]rss delfeed <Feed number>", private
+				return (lang.msg_delfeed_usage or "Usage: [+!#]rss delfeed <Feed number>"), private
 			end
 			local n = data
 			if n then
 				n = tonumber(n)
 			end
 			if not n or n < 1 then
-				return "Error! ' "..data.." ' is not a valid feed number.", private
+				return utf_format(lang.msg_err_invalid_feed_number or "Error! '%s' is not a valid feed number.", data), private
 			end
 
 			if Feeds[n] then
@@ -958,7 +989,7 @@ FwCmds = {
 				end
 				for i,v in ipairs(Users) do
 					if v[4] then
-						pop(v[4], n) 
+						pop(v[4], n)
 					else
 						local mute = { }
 						for i=1, #Feeds do
@@ -968,13 +999,13 @@ FwCmds = {
 					end
 				end
 				SaveFile(UserFile,Users,"Users")
-				
-				return del.tag.." ("..tostring(n)..") is now deleted.", private
+
+				return utf_format(lang.msg_delfeed_ok or "%s (%s) is now deleted.", del.tag, tostring(n)), private
 			else
-				return "Error! "..tostring(n).." is not a valid feed number.", private
+				return utf_format(lang.msg_err_invalid_feed_number or "Error! '%s' is not a valid feed number.", tostring(n)), private
 			end
 		else
-			return "Delete feed <Feed number>",
+			return (lang.desc_delfeed or "Delete feed <Feed number>"),
 			"",
 			""
 		end
@@ -985,20 +1016,20 @@ FwCmds = {
 	refresh = {function(user,data,cmd2,data2,private)
 		if user then
 			if not data then
-				return "Usage: [+!#]rss refresh <Minutes>", private
+				return (lang.msg_refresh_usage or "Usage: [+!#]rss refresh <Minutes>"), private
 			end
 			local n = data
 			if n then
 				n = tonumber(n)
 			end
 			if not n or n < 2 then
-				return "Error! ' "..data.." ' is not a valid number of minutes.", private
+				return utf_format(lang.msg_err_invalid_minutes or "Error! '%s' is not a valid number of minutes.", data), private
 			end
 			tSettings.Refresh = n
 			SaveFile(SettingsFile, tSettings, "tSettings")
-			return "Refresh time is now "..tostring(n).." minutes.", private
+			return utf_format(lang.msg_refresh_set or "Refresh time is now %s minutes.", tostring(n)), private
 		else
-			return "Set feed refresh time <Minutes>",
+			return (lang.desc_refresh or "Set feed refresh time <Minutes>"),
 			"",
 			""
 		end
@@ -1016,7 +1047,7 @@ FwCmds = {
 				if Feeds[n] then
 					TriggerGetFeed(n)
 				else
-					return "Error! "..tostring(n).." is not a valid feed number.", private
+					return utf_format(lang.msg_err_invalid_feed_number or "Error! '%s' is not a valid feed number.", tostring(n)), private
 				end
 			else
 				TriggerGetFeed()
@@ -1024,11 +1055,11 @@ FwCmds = {
 			return nil
 		else
 			if tSettings.allFeedsAtOnce then
-				return "Get all feeds now.",
+				return (lang.desc_getfeed_all or "Get all feeds now."),
 				"",
 				""
 			else
-				return "Get next feed now.",
+				return (lang.desc_getfeed_next or "Get next feed now."),
 				"",
 				""
 			end
@@ -1040,24 +1071,24 @@ FwCmds = {
 	mutefeed = {function(user,data,cmd2,data2,private)
 		if user then
 			if not data then
-				return "Usage: [+!#]rss mutefeed <Feed number>", private
+				return (lang.msg_mutefeed_usage or "Usage: [+!#]rss mutefeed <Feed number>"), private
 			end
 			local n = data
 			if n then
 				n = tonumber(n)
 			end
 			if not n then
-				return "Error! ' "..data.." ' is not a valid feed number.", private
+				return utf_format(lang.msg_err_invalid_feed_number or "Error! '%s' is not a valid feed number.", data), private
 			end
 
 			if n and n > 0 then
 				if Feeds[n] then
 					if Feeds[n].force then
-						return "Feed "..Feeds[n].tag.." ("..tostring(n)..") is forced and can't be muted.", private
+						return utf_format(lang.msg_mutefeed_forced or "Feed %s (%s) is forced and can't be muted.", Feeds[n].tag, tostring(n)), private
 					end
 					local u = ChkUsers(user:nick())
 					if u then
-						local tab = {["true"] = "muted",["false"] = "showing"}
+						local tab = {["true"] = (lang.val_muted or "muted"),["false"] = (lang.val_showing or "showing")}
 						if Users[u][4] == nil then
 							local mute = { }
 							for i=1, #Feeds do
@@ -1067,20 +1098,20 @@ FwCmds = {
 						else
 							Users[u][4][n] = not Users[u][4][n]
 						end
-						local reply = "Feed "..Feeds[n].tag.." ("..tostring(n)..") is now "..tab[tostring(Users[u][4][n])].."."
+						local reply = utf_format(lang.msg_mutefeed_set or "Feed %s (%s) is now %s.", Feeds[n].tag, tostring(n), tab[tostring(Users[u][4][n])])
 						SaveFile(UserFile,Users,"Users")
 						return reply, private
 					else
-						return "Set feed settings first.", private
+						return (lang.msg_mutefeed_setup or "Set feed settings first."), private
 					end
 				else
-					return "Error! "..tostring(n).." is not a valid feed number.", private
+					return utf_format(lang.msg_err_invalid_feed_number or "Error! '%s' is not a valid feed number.", tostring(n)), private
 				end
 			else
-				return "Error! "..tostring(n).." is not a valid feed number.", private
+				return utf_format(lang.msg_err_invalid_feed_number or "Error! '%s' is not a valid feed number.", tostring(n)), private
 			end
 		else
-			return "Mute/Unmute a Feed <Feed number>","",""
+			return (lang.desc_mutefeed or "Mute/Unmute a Feed <Feed number>"),"",""
 		end
 	end,
 	{ level = 10 } --min level to use this command
@@ -1088,23 +1119,23 @@ FwCmds = {
 	maxfeeds = {function(user,data,cmd2,data2,private)
 		if user then
 			if not data then
-				return "Usage: [+!#]rss maxfeeds <Number of Feeds>", private
+				return (lang.msg_maxfeeds_usage or "Usage: [+!#]rss maxfeeds <Number of Feeds>"), private
 			end
 			local n = data
 			if n then
 				n = tonumber(n)
 			end
 			if not n or n < 1 then
-				return "Error! ' "..data.." ' is not a valid number of feeds.", private
+				return utf_format(lang.msg_err_invalid_feed_count or "Error! '%s' is not a valid number of feeds.", data), private
 			end
 			tSettings.MaxFeeds = n
 			if n > tSettings.MaxCache then
 				tSettings.MaxCache = n
 			end
 			SaveFile(SettingsFile, tSettings, "tSettings")
-			return "Max feeds is now "..tostring(n)..".", private
+			return utf_format(lang.msg_maxfeeds_set or "Max feeds is now %s.", tostring(n)), private
 		else
-			return "Set max feeds to show <Number of Feeds>",
+			return (lang.desc_maxfeeds or "Set max feeds to show <Number of Feeds>"),
 			"",
 			""
 		end
@@ -1115,23 +1146,23 @@ FwCmds = {
 	maxcache = {function(user,data,cmd2,data2,private)
 		if user then
 			if not data then
-				return "Usage: [+!#]rss maxcache <Number of Feeds>", private
+				return (lang.msg_maxcache_usage or "Usage: [+!#]rss maxcache <Number of Feeds>"), private
 			end
 			local n = data
 			if n then
 				n = tonumber(n)
 			end
 			if not n or n < 1 then
-				return "Error! ' "..data.." ' is not a valid number of feeds.", private
+				return utf_format(lang.msg_err_invalid_feed_count or "Error! '%s' is not a valid number of feeds.", data), private
 			end
 			tSettings.MaxCache = n
 			if n < tSettings.MaxFeeds then
 				tSettings.MaxFeeds = n
 			end
 			SaveFile(SettingsFile, tSettings, "tSettings")
-			return "Max cache is now "..tostring(n)..".", private
+			return utf_format(lang.msg_maxcache_set or "Max cache is now %s.", tostring(n)), private
 		else
-			return "Set max feeds to cache <Number of Feeds>",
+			return (lang.desc_maxcache or "Set max feeds to cache <Number of Feeds>"),
 			"",
 			""
 		end
@@ -1142,20 +1173,20 @@ FwCmds = {
 	maxwidth = {function(user,data,cmd2,data2,private)
 		if user then
 			if not data then
-				return "Usage: [+!#]rss maxwidth <Number of Characters>", private
+				return (lang.msg_maxwidth_usage or "Usage: [+!#]rss maxwidth <Number of Characters>"), private
 			end
 			local n = data
 			if n then
 				n = tonumber(n)
 			end
 			if not n or n < 1 then
-				return "Error! ' "..data.." ' is not a valid number of characters.", private
+				return utf_format(lang.msg_err_invalid_char_count or "Error! '%s' is not a valid number of characters.", data), private
 			end
 			tSettings.MaxWidth = n
 			SaveFile(SettingsFile, tSettings, "tSettings")
-			return "Max width is now "..tostring(n).." characters.", private
+			return utf_format(lang.msg_maxwidth_set or "Max width is now %s characters.", tostring(n)), private
 		else
-			return "Set max characters to show <Number of Characters>",
+			return (lang.desc_maxwidth or "Set max characters to show <Number of Characters>"),
 			"",
 			""
 		end
@@ -1164,12 +1195,12 @@ FwCmds = {
 
 	},	focefeedpm = {function(user,data,cmd2,data2,private)
 		if user then
-			local tab = {["true"] = "PM",["false"] = "Main"}
+			local tab = {["true"] = (lang.val_pm_short or "PM"),["false"] = (lang.val_main_short or "Main")}
 			tSettings.ForceFeedPM = not tSettings.ForceFeedPM
 			SaveFile(SettingsFile, tSettings, "tSettings")
-			return "Forced feeds are now showing in "..tab[ tostring(tSettings.ForceFeedPM) ]..".", private
+			return utf_format(lang.msg_focefeedpm_set or "Forced feeds are now showing in %s.", tab[ tostring(tSettings.ForceFeedPM) ]), private
 		else
-			return "Toggle forced feeds to PM or Main",
+			return (lang.desc_focefeedpm or "Toggle forced feeds to PM or Main"),
 			"",
 			""
 		end
@@ -1179,12 +1210,12 @@ FwCmds = {
 	},
 	msgtopm = {function(user,data,cmd2,data2,private)
 		if user then
-			local tab = {["true"] = "PM",["false"] = "Main"}
+			local tab = {["true"] = (lang.val_pm_short or "PM"),["false"] = (lang.val_main_short or "Main")}
 			tSettings.msgToPM = not tSettings.msgToPM
 			SaveFile(SettingsFile, tSettings, "tSettings")
-			return "Messages are now showing in "..tab[ tostring(tSettings.ForceFeedPM) ]..".", private
+			return utf_format(lang.msg_msgtopm_set or "Messages are now showing in %s.", tab[ tostring(tSettings.ForceFeedPM) ]), private
 		else
-			return "Toggle messages to PM or Main",
+			return (lang.desc_msgtopm or "Toggle messages to PM or Main"),
 			"",
 			""
 		end
@@ -1194,12 +1225,12 @@ FwCmds = {
 	},
 	simple = {function(user,data,cmd2,data2,private)
 		if user then
-			local tab = {["true"] = "on",["false"] = "off"}
+			local tab = {["true"] = (lang.val_on_short or "on"),["false"] = (lang.val_off_short or "off")}
 			tSettings.Simple = not tSettings.Simple
 			SaveFile(SettingsFile, tSettings, "tSettings")
-			return "Simple layout in now "..tab[ tostring(tSettings.Simple) ]..".", private
+			return utf_format(lang.msg_simple_set or "Simple layout in now %s.", tab[ tostring(tSettings.Simple) ]), private
 		else
-			return "Toggle simple feed layout",
+			return (lang.desc_simple or "Toggle simple feed layout"),
 			"",
 			""
 		end
@@ -1209,8 +1240,8 @@ FwCmds = {
 	},
 	settings = {function(user,data,cmd2,data2,private)
 		if user then
-			local reply,c = "\n\n\t"..scriptname.." Settings\n\n\tSetting:  "..
-			"Value\r\n\t"..string_rep("-",50).."\r\n",""
+			local reply,c = "\n\n\t"..display_name..(lang.label_settings_header or " Settings").."\n\n\t"..(lang.label_settings_setting or "Setting:").."  "..
+			(lang.label_settings_value or "Value").."\r\n\t"..string_rep("-",50).."\r\n",""
 			for k,v in pairs(tSettings) do
 				c = c.."\t"..k..":  "..tostring(v).."\r\n"
 			end
@@ -1230,7 +1261,7 @@ FwCmds = {
 				return reply..c.."\n\t"..string_rep("-",50).."\r\n\r\n", PM
 			end
 		else
-			return scriptname.." Settings","",""
+			return display_name..(lang.desc_settings or " Settings"),"",""
 		end
 	end,
 	{ level = 60 } --min level to use this command
@@ -1429,25 +1460,33 @@ hub.setlistener( "onStart", { },
 
 		ucmd = hub.import "etc_usercommands"    -- add usercommand
 		if ucmd then
+			local _in_feeds   = "%[line:"..(lang.ucmd_input_feeds       or " on/off/m/p").."]"
+			local _in_fnum    = "%[line:"..(lang.ucmd_input_feed_number or " Feed Number ").."]"
+			local _in_url     = "%[line:"..(lang.ucmd_input_url         or " Url ").."]"
+			local _in_tag     = "%[line:"..(lang.ucmd_input_tag         or " Tag ").."]"
+			local _in_mins    = "%[line:"..(lang.ucmd_input_minutes     or " Number of Minutes ").."]"
+			local _in_nfeeds  = "%[line:"..(lang.ucmd_input_num_feeds   or " Number of Feeds ").."]"
+			local _in_nchars  = "%[line:"..(lang.ucmd_input_num_chars   or " Number of Characters ").."]"
+			local _in_get_pfx = lang.ucmd_input_getfeed_prefix or " Feed Number, empy for "
 			ucmd.add( ucmd_menu_help, cmd, {"feedhelp" }, { "CT1" }, FwCmds["feedhelp"][2]["level"] )
-			ucmd.add( ucmd_menu_feeds, cmd, {"feeds", "%[line: on/off/m/p]" }, { "CT1" }, FwCmds["feeds"][2]["level"] )
-			ucmd.add( ucmd_menu_lastfeed, cmd, {"lastfeed", "%[line: Feed Number ]" }, { "CT1" }, FwCmds["lastfeed"][2]["level"] )
+			ucmd.add( ucmd_menu_feeds, cmd, {"feeds", _in_feeds }, { "CT1" }, FwCmds["feeds"][2]["level"] )
+			ucmd.add( ucmd_menu_lastfeed, cmd, {"lastfeed", _in_fnum }, { "CT1" }, FwCmds["lastfeed"][2]["level"] )
 			ucmd.add( ucmd_menu_listusers, cmd, {"listusers" }, { "CT1" }, FwCmds["listusers"][2]["level"] )
 			ucmd.add( ucmd_menu_listfeeds, cmd, {"listfeeds" }, { "CT1" }, FwCmds["listfeeds"][2]["level"] )
-			ucmd.add( ucmd_menu_addfeed, cmd, {"addfeed", "%[line: Url ]", "%[line: Tag ]" }, { "CT1" }, FwCmds["addfeed"][2]["level"] )
-			ucmd.add( ucmd_menu_forcefeed, cmd, {"forcefeed", "%[line: Feed Number ]" }, { "CT1" }, FwCmds["forcefeed"][2]["level"] )
-			ucmd.add( ucmd_menu_deletefeed, cmd, {"delfeed", "%[line: Feed Number ]" }, { "CT1" }, FwCmds["delfeed"][2]["level"] )
-			local AllNext = "next feed"
+			ucmd.add( ucmd_menu_addfeed, cmd, {"addfeed", _in_url, _in_tag }, { "CT1" }, FwCmds["addfeed"][2]["level"] )
+			ucmd.add( ucmd_menu_forcefeed, cmd, {"forcefeed", _in_fnum }, { "CT1" }, FwCmds["forcefeed"][2]["level"] )
+			ucmd.add( ucmd_menu_deletefeed, cmd, {"delfeed", _in_fnum }, { "CT1" }, FwCmds["delfeed"][2]["level"] )
+			local AllNext = (lang.label_get_next_feed or "next feed")
 			if tSettings.allFeedsAtOnce then
-				AllNext = "all feeds"
+				AllNext = (lang.label_get_all_feeds or "all feeds")
 			end
-			ucmd.add( ucmd_menu_getfeed, cmd, {"getfeed", "%[line: Feed Number, empy for "..AllNext.." ]" }, { "CT1" }, FwCmds["getfeed"][2]["level"] )
-			ucmd.add( ucmd_menu_mutefeed, cmd, {"mutefeed", "%[line: Feed Number ]" }, { "CT1" }, FwCmds["mutefeed"][2]["level"] )
+			ucmd.add( ucmd_menu_getfeed, cmd, {"getfeed", "%[line:".._in_get_pfx..AllNext.." ]" }, { "CT1" }, FwCmds["getfeed"][2]["level"] )
+			ucmd.add( ucmd_menu_mutefeed, cmd, {"mutefeed", _in_fnum }, { "CT1" }, FwCmds["mutefeed"][2]["level"] )
 			--Settings
-			ucmd.add( ucmd_menu_refresh, cmd, {"refresh", "%[line: Number of Minutes ]" }, { "CT1" }, FwCmds["refresh"][2]["level"] )
-			ucmd.add( ucmd_menu_maxfeeds, cmd, {"maxfeeds", "%[line: Number of Feeds ]" }, { "CT1" }, FwCmds["maxfeeds"][2]["level"] )
-			ucmd.add( ucmd_menu_maxcache, cmd, {"maxcache", "%[line: Number of Feeds ]" }, { "CT1" }, FwCmds["maxcache"][2]["level"] )
-			ucmd.add( ucmd_menu_maxwidth, cmd, {"maxwidth", "%[line: Number of Characters ]" }, { "CT1" }, FwCmds["maxwidth"][2]["level"] )
+			ucmd.add( ucmd_menu_refresh, cmd, {"refresh", _in_mins }, { "CT1" }, FwCmds["refresh"][2]["level"] )
+			ucmd.add( ucmd_menu_maxfeeds, cmd, {"maxfeeds", _in_nfeeds }, { "CT1" }, FwCmds["maxfeeds"][2]["level"] )
+			ucmd.add( ucmd_menu_maxcache, cmd, {"maxcache", _in_nfeeds }, { "CT1" }, FwCmds["maxcache"][2]["level"] )
+			ucmd.add( ucmd_menu_maxwidth, cmd, {"maxwidth", _in_nchars }, { "CT1" }, FwCmds["maxwidth"][2]["level"] )
 			ucmd.add( ucmd_menu_focefeedpm, cmd, {"focefeedpm" }, { "CT1" }, FwCmds["focefeedpm"][2]["level"] )
 			ucmd.add( ucmd_menu_msgtopm, cmd, {"msgtopm" }, { "CT1" }, FwCmds["msgtopm"][2]["level"] )
 			ucmd.add( ucmd_menu_simple, cmd, {"simple" }, { "CT1" }, FwCmds["simple"][2]["level"] )

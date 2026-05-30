@@ -1,0 +1,188 @@
+-- ptx_RSSFeedWatch - English strings.
+--
+-- The two-mode FwCmds handler pattern: each command function returns
+-- `(msg, private)` in user-mode and `(description, line1_label, line2_label)`
+-- in ucmd-mode (when user==nil). Labels with leading "%[line:" syntax
+-- are ucmd input field placeholders.
+--
+-- Display-layout result texts (the settings table, lastfeed/listfeeds/
+-- listusers column outputs) keep their English column structure;
+-- only the column headers and standalone status messages are
+-- localised. Per the v0.12 partial-i18n scope.
+
+return {
+
+    -- RC menu containers
+    ucmd_menu_root           = "RSSFeedWatch",
+    ucmd_menu_settings_group = "Settings",
+
+    -- RC menu labels
+    ucmd_label_help        = "Show help",
+    ucmd_label_feeds       = "Set feed settings",
+    ucmd_label_lastfeed    = "Show last feeds",
+    ucmd_label_listusers   = "List active feed users",
+    ucmd_label_listfeeds   = "List available feeds",
+    ucmd_label_addfeed     = "Add a feed",
+    ucmd_label_forcefeed   = "Toggle force feed",
+    ucmd_label_deletefeed  = "Delete a feed",
+    ucmd_label_getfeed     = "Get next feed",
+    ucmd_label_mutefeed    = "Mute//Unmute a feed",
+    ucmd_label_refresh     = "Set feed refresh",
+    ucmd_label_maxfeeds    = "Set feeds to show",
+    ucmd_label_maxcache    = "Set feeds to cache",
+    ucmd_label_maxwidth    = "Set max width",
+    ucmd_label_focefeedpm  = "Toggle forced feeds to PM",
+    ucmd_label_msgtopm     = "Toggle messages to PM",
+    ucmd_label_simple      = "Toggle simple display",
+    ucmd_label_settings    = "Show settings",
+
+    -- ucmd input-field placeholders (without the leading "%[line:" prefix)
+    ucmd_input_feeds       = " on/off/m/p",
+    ucmd_input_feed_number = " Feed Number ",
+    ucmd_input_url         = " Url ",
+    ucmd_input_tag         = " Tag ",
+    ucmd_input_minutes     = " Number of Minutes ",
+    ucmd_input_num_feeds   = " Number of Feeds ",
+    ucmd_input_num_chars   = " Number of Characters ",
+    ucmd_input_getfeed_prefix = " Feed Number, empy for ",
+
+    -- Module-level
+    msg_usage              = "Usage: [+!#]rss cmd, type [+!#]rss feedhelp for further instructions.",
+    msg_denied             = "You are not allowed to use this command.",
+
+    -- Bot description
+    bot_desc               = "RSSFeedWatch",
+
+    -- Body block decoration
+    label_feedwatch_body   = "FeedWatch",
+
+    -- Generic errors (parametrised)
+    msg_err_invalid_feed_number = "Error! '%s' is not a valid feed number.",
+    msg_err_invalid_minutes     = "Error! '%s' is not a valid number of minutes.",
+    msg_err_invalid_feed_count  = "Error! '%s' is not a valid number of feeds.",
+    msg_err_invalid_char_count  = "Error! '%s' is not a valid number of characters.",
+
+    -- feeds command
+    msg_feeds_already_disabled = "%s, feeds are already disabled for you.",
+    msg_feeds_already_enabled  = "%s, feeds are already enabled for you and will be sent in %s",
+    msg_feeds_already_disabled_set = "%s, feeds are already disabled for you and will be sent in %s when enabled.",
+    msg_feeds_already_set_type = "%s, feeds are already set for %s and are currently %s",
+    msg_feeds_current          = "Feeds are currently %s current message type: %s",
+    msg_feeds_error_selection  = "**Error in selection. Usage: %s%s <on/off/p/m>",
+    msg_feeds_usage_selection  = "Error in selection. Usage: %s%s <on/off/p/m>",
+    desc_feeds                 = "Set your RSS feed option",
+    ucmd_feeds_input           = " %[line:on=enabled, off= disabled, m=main, p=pm]",
+
+    -- lastfeed command
+    msg_lastfeed_usage    = "Usage: [+!#]rss lastfeed <Feed number>",
+    msg_lastfeed_no_cache = "There are no cached feeds at this time.",
+    desc_lastfeed         = "Show Last feeds of <Feed number>",
+
+    -- listfeeds command
+    msg_listfeeds_header  = "Listing enabled feeds:\n\n",
+    msg_listfeeds_muted   = " (muted)",
+    msg_listfeeds_empty   = "Error, There are no feeds set in script.",
+    desc_listfeeds        = "List Enabled Feeds",
+
+    -- listusers command
+    label_listusers_active     = " Active Users",
+    label_listusers_nickname   = "Nickname",
+    label_listusers_msgtype    = "Message Type",
+    label_listusers_status     = "Status",
+    desc_listusers             = "List Active Feed Users",
+
+    -- Common status/value labels (shared across handlers)
+    val_enabled      = "enabled",
+    val_disabled     = "disabled",
+    val_main_chat    = "main chat      ",
+    val_pm           = "private message",
+    val_muted        = "muted",
+    val_showing      = "showing",
+    val_pm_short     = "PM",
+    val_main_short   = "Main",
+    val_on_short     = "on",
+    val_off_short    = "off",
+
+    -- feedhelp command
+    label_feedhelp_header_a = " Command Help",
+    label_feedhelp_header_b = "Command",
+    label_feedhelp_header_c = "Description",
+    desc_feedhelp           = " Help",
+
+    -- addfeed command
+    msg_addfeed_usage   = "Usage: [+!#]rss addfeed <Url> <Tag>",
+    msg_addfeed_dup_url = "Feed with url %s already exists.",
+    msg_addfeed_dup_tag = "Feed with tag %s already exists.",
+    msg_addfeed_ok      = "New feed added.",
+    desc_addfeed        = "Add new RSS feed <Url> <Tag>",
+
+    -- forcefeed command
+    msg_forcefeed_usage = "Usage: [+!#]rss forcefeed <Feed number>",
+    msg_forcefeed_set   = "ForceFeed is now %s for %s (%s).",
+    desc_forcefeed      = "Toggle force feed on <Feed number>",
+
+    -- delfeed command
+    msg_delfeed_usage = "Usage: [+!#]rss delfeed <Feed number>",
+    msg_delfeed_ok    = "%s (%s) is now deleted.",
+    desc_delfeed      = "Delete feed <Feed number>",
+
+    -- refresh command
+    msg_refresh_usage = "Usage: [+!#]rss refresh <Minutes>",
+    msg_refresh_set   = "Refresh time is now %s minutes.",
+    desc_refresh      = "Set feed refresh time <Minutes>",
+
+    -- getfeed command
+    desc_getfeed_all  = "Get all feeds now.",
+    desc_getfeed_next = "Get next feed now.",
+    label_get_all_feeds = "all feeds",
+    label_get_next_feed = "next feed",
+
+    -- mutefeed command
+    msg_mutefeed_usage   = "Usage: [+!#]rss mutefeed <Feed number>",
+    msg_mutefeed_forced  = "Feed %s (%s) is forced and can't be muted.",
+    msg_mutefeed_set     = "Feed %s (%s) is now %s.",
+    msg_mutefeed_setup   = "Set feed settings first.",
+    desc_mutefeed        = "Mute/Unmute a Feed <Feed number>",
+
+    -- maxfeeds command
+    msg_maxfeeds_usage = "Usage: [+!#]rss maxfeeds <Number of Feeds>",
+    msg_maxfeeds_set   = "Max feeds is now %s.",
+    desc_maxfeeds      = "Set max feeds to show <Number of Feeds>",
+
+    -- maxcache command
+    msg_maxcache_usage = "Usage: [+!#]rss maxcache <Number of Feeds>",
+    msg_maxcache_set   = "Max cache is now %s.",
+    desc_maxcache      = "Set max feeds to cache <Number of Feeds>",
+
+    -- maxwidth command
+    msg_maxwidth_usage = "Usage: [+!#]rss maxwidth <Number of Characters>",
+    msg_maxwidth_set   = "Max width is now %s characters.",
+    desc_maxwidth      = "Set max characters to show <Number of Characters>",
+
+    -- focefeedpm / msgtopm / simple toggles
+    msg_focefeedpm_set = "Forced feeds are now showing in %s.",
+    desc_focefeedpm    = "Toggle forced feeds to PM or Main",
+    msg_msgtopm_set    = "Messages are now showing in %s.",
+    desc_msgtopm       = "Toggle messages to PM or Main",
+    msg_simple_set     = "Simple layout in now %s.",
+    desc_simple        = "Toggle simple feed layout",
+
+    -- settings command
+    label_settings_header   = " Settings",
+    label_settings_setting  = "Setting:",
+    label_settings_value    = "Value",
+    desc_settings           = " Settings",
+
+    -- GetFeed timing / labels
+    label_processed_in   = "Processed In:",
+    val_seconds          = "seconds.",
+    val_part_second      = "of a second.",
+
+    -- "New Feed" / "New Feeds" header in feed broadcasts
+    label_new_feed_header_simple  = "[ %s ] New Feed%s from: %s",
+    label_new_feed_header_pretty  = "[ %s ] New Feed%s from: %s",
+
+    -- lastfeed cached header
+    label_cached_feed = "Cached feed",
+
+}
