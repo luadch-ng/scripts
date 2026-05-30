@@ -1,0 +1,7 @@
+return {
+
+    msg_login         = "is back...",
+    msg_logout        = "is leaving...",
+    msg_user_welcome  = "nice to have you back...",
+
+}

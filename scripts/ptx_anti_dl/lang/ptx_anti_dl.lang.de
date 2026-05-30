@@ -1,0 +1,10 @@
+return {
+
+    -- The three user-facing messages: shown to the affected user on
+    -- login / blocked search / blocked CTM. Operator-customisable via
+    -- the tSettings table in source; per-language defaults live here.
+    sMsgOnConnect = "Deine Such- und Downloadoptionen sind blockiert. Bereinige deinen Share mit Sor.Anti.RAR.FLAC.HD.v.2.32 und melde dich danach bei den OPs.",
+    sNoSearchMsg  = "Deine Such- und Downloadoptionen sind blockiert. Bereinige deinen Share mit Sor.Anti.RAR.FLAC.HD.v.2.32 und melde dich danach bei den OPs.",
+    sNoCTMMsg     = "Deine Such- und Downloadoptionen sind blockiert. Bereinige deinen Share mit Sor.Anti.RAR.FLAC.HD.v.2.32 und melde dich danach bei den OPs.",
+
+}

@@ -31,7 +31,13 @@
 --------------
 
 local scriptname = "ptx_anti_dl"
-local scriptversion = "2.0"
+local scriptversion = "2.1"
+
+-- #31 PR-3: route the 3 user-facing config defaults (sMsgOnConnect,
+-- sNoSearchMsg, sNoCTMMsg) through lang. The remaining op-facing
+-- command output stays English (operators consistently English).
+local scriptlang = cfg.get( "language" )
+local lang, err = cfg.loadlanguage( scriptlang, scriptname ); lang = lang or {}; err = err and hub.debug( err )
 
 local oplevel = 60
 
@@ -70,15 +76,15 @@ local tSettings = {
 	["bMsgOnConnectPM"] = true,
 	["bMsgOnConnectMain"] = false,
 	-- The message to send to the users
-	["sMsgOnConnect"] = "Your search and download options are blocked. Clean your share with Sor.Anti.RAR.FLAC.HD.v.2.32 and after that report to [Pm_To_OPs]",
+	["sMsgOnConnect"] = lang.sMsgOnConnect or "Your search and download options are blocked. Clean your share with Sor.Anti.RAR.FLAC.HD.v.2.32 and after that report to [Pm_To_OPs]",
 	-- Should I block CTM/RCTM (Downloads)
 	["bCTM"] = true,
 	-- Should I block Search?
 	["bSearch"] = true,
 	-- Message to send to the user when they try to search and are blocked by hub (only used if bSilent is false)
-	["sNoSearchMsg"] = "Your search and download options are blocked. Clean your share with Sor.Anti.RAR.FLAC.HD.v.2.32 and after that report to [Pm_To_OPs]",
+	["sNoSearchMsg"] = lang.sNoSearchMsg or "Your search and download options are blocked. Clean your share with Sor.Anti.RAR.FLAC.HD.v.2.32 and after that report to [Pm_To_OPs]",
 	-- Message to send to the user when they try to download and are blocked by hub (only used if bSilent is false)
-	["sNoCTMMsg"] = "Your search and download options are blocked. Clean your share with Sor.Anti.RAR.FLAC.HD.v.2.32 and after that report to [Pm_To_OPs]",
+	["sNoCTMMsg"] = lang.sNoCTMMsg or "Your search and download options are blocked. Clean your share with Sor.Anti.RAR.FLAC.HD.v.2.32 and after that report to [Pm_To_OPs]",
 	-- Send PM to all ops when user is added or removed?
 	["bNotifyOps"] = true,
 }
@@ -191,7 +197,7 @@ local onbmsg = function( tUser, adccmd, parameters, txt )
 					end
 					util_savetable( tAntiDL, "tAntiDL", sFilePath )
 					util_savetable( tStatAntiDL, "tStatAntiDL", sStatFilePath )
-					tUser:reply(param2.." has been succesfully added to the Anti-Download list!", tSettings.sBot)
+					tUser:reply(param2.." has been successfully added to the Anti-Download list!", tSettings.sBot)
 					if tSettings.bNotifyOps then
 						opchat.feed(tUser:nick().." added " ..param2.. " to the Anti-Download list")
 					end
@@ -209,7 +215,7 @@ local onbmsg = function( tUser, adccmd, parameters, txt )
 					tAntiDL[param2] = nil
 					util_savetable( tAntiDL, "tAntiDL", sFilePath )
 					tAntiDL = util_loadtable( sFilePath ) or {}
-					tUser:reply(param2.." has been succesfully removed from the Anti-Download list!", tSettings.sBot)
+					tUser:reply(param2.." has been successfully removed from the Anti-Download list!", tSettings.sBot)
 					if tSettings.bNotifyOps then
 						opchat.feed(tUser:nick().." removed "..param2.." from the Anti-Download list")
 					end
