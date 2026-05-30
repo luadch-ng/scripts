@@ -9,6 +9,10 @@
 
     etc_client_su_check.lua by pulsar
 
+        v0.3
+            - i18n: route msgs through lang (msg_not_found, msg_yes/no,
+              msg_report, msg_disconnect). Part of #31 PR-2.
+
         v0.2
             - check for the presence AND absence of various features
 
@@ -22,7 +26,10 @@
 --------------
 
 local scriptname = "etc_client_su_check"
-local scriptversion = "0.2"
+local scriptversion = "0.3"
+
+local scriptlang = cfg.get( "language" )
+local lang, err = cfg.loadlanguage( scriptlang, scriptname ); lang = lang or {}; err = err and hub.debug( err )
 
 local checked_levels = {  -- Checked users
 
@@ -81,10 +88,12 @@ local report_level = 60  -- min level to get a report? (only for hubbot msg) (in
 local disconnect = true
 
 --// Messages
-local msg_not_found = "not found"
-local msg_dis = ""; if disconnect then msg_dis = "YES" else msg_dis = "NO" end
-local msg_report = "[ CLIENT SU CHECK ]--> User: %s  |  forbidden flag(s):  %s  |  missing flag(s):  %s  |  disconnected:  %s"
-local msg_disconnect = "[ CLIENT SU CHECK ]--> You were disconnected because: forbidden client feature(s):  %s  |  missing client feature(s):  %s"
+local msg_not_found  = lang.msg_not_found  or "not found"
+local msg_yes        = lang.msg_yes        or "YES"
+local msg_no         = lang.msg_no         or "NO"
+local msg_dis        = disconnect and msg_yes or msg_no
+local msg_report     = lang.msg_report     or "[ CLIENT SU CHECK ]--> User: %s  |  forbidden flag(s):  %s  |  missing flag(s):  %s  |  disconnected:  %s"
+local msg_disconnect = lang.msg_disconnect or "[ CLIENT SU CHECK ]--> You were disconnected because: forbidden client feature(s):  %s  |  missing client feature(s):  %s"
 
 
 ----------

@@ -1,0 +1,16 @@
+return {
+
+    badmsg = [[
+
+        Du bist laut deines Tags in einem Öffentlichen Hub,
+        diese sind in unserem Hub nicht geduldet. Eine Nachricht
+        über dein Fehlverhalten wurde an alle OP's gesendet.
+
+        Falls das nicht zutrifft melde dich bitte unverzüglich bei den OP's.
+
+        ]],
+
+    -- op_report = utf.format(op_report, nick, level)
+    op_report = "[[OPENHUBS]]--> Folgender User wurde als Benutzer eines öffentlichen Hubs registriert %s mit Profil [%s]",
+
+}

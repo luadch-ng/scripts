@@ -1,0 +1,13 @@
+return {
+
+    ucmd_menu_ct2_add = { "Change", "Speed Info", "add" },
+    ucmd_menu_ct2_del = { "Change", "Speed Info", "del" },
+    ucmd_line = "New Speed:",
+
+    msg_denied = "You are not allowed to use this command.",
+    msg_fail   = "User not found.",
+    msg_add    = "Entry changed.",
+    msg_del    = "Entry removed.",
+    msg_usage  = "[+!#]csi add <SID> <connection speed info about user> / [+!#]csi del <SID>",
+
+}

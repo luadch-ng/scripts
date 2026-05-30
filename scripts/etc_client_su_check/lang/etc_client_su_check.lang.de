@@ -1,0 +1,9 @@
+return {
+
+    msg_not_found = "nicht gefunden",
+    msg_yes = "JA",
+    msg_no  = "NEIN",
+    msg_report = "[ CLIENT SU CHECK ]--> User: %s  |  verbotene Flag(s):  %s  |  fehlende Flag(s):  %s  |  getrennt:  %s",
+    msg_disconnect = "[ CLIENT SU CHECK ]--> Du wurdest getrennt weil: verbotene Client-Feature(s):  %s  |  fehlende Client-Feature(s):  %s",
+
+}

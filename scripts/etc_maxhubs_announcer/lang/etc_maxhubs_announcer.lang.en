@@ -1,0 +1,17 @@
+return {
+
+    -- %s = maxHubs limit
+    badmsg = [[
+
+        You are connected to more hubs than allowed, please check the rules.
+        At the moment only %s hubs are allowed.
+        A misconduct notice has been sent to the OPs.
+
+        If this does not apply, please contact the OPs.
+
+        ]],
+
+    -- op_report = utf.format(opmsg, nick, level, hubs)
+    op_report = "[[MAXHUBS]]--> %s with profile [%s] was found connected to %s hubs",
+
+}

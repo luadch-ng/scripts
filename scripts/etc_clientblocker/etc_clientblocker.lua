@@ -9,6 +9,12 @@
 
 	etc_clientblocker.lua by pulsar
 
+        v0.2:
+            - i18n: route the default block-reason through lang
+              (msg_client_not_allowed) + fix typo "ist not allowed"
+              -> "is not allowed". Per-rule operator override via the
+              client_tbl values still works. Part of #31 PR-2.
+
         v0.1:
             - blocks clients
         
@@ -20,7 +26,12 @@
 --------------
 
 local scriptname = "etc_clientblocker"
-local scriptversion = "0.1"
+local scriptversion = "0.2"
+
+local scriptlang = cfg.get( "language" )
+local lang, err = cfg.loadlanguage( scriptlang, scriptname ); lang = lang or {}; err = err and hub.debug( err )
+
+local msg_client_not_allowed = lang.msg_client_not_allowed or "Your client is not allowed"
 
 local check_level = {
 
@@ -38,13 +49,13 @@ local check_level = {
 }
 
 local client_tbl = {
-    
-    [ "0.7" ] = "Your Client ist not allowed",  -- searching for all clients that includes "0.7" (all dc++ 0.7xx clients)
-    [ "0.8" ] = "Your Client ist not allowed",  -- searching for all clients that includes "0.8" (all dc++ 0.8xx clients)
-    [ "AirDC%+%+%s2" ] = "Your Client ist not allowed",  -- searching for all AirDC++ 2.xx
-    [ "AirDC%+%+%s2.9" ] = "Your Client ist not allowed",  -- searching for all AirDC++ 2.9x
-    [ "AirDC%+%+%s3" ] = "Your Client ist not allowed",  -- searching for all AirDC++ 3.xx
-    [ "AirDC%+%+%s3.0" ] = "Your Client ist not allowed",  -- searching for all AirDC++ 3.0x
+
+    [ "0.7" ] = msg_client_not_allowed,           -- searching for all clients that includes "0.7" (all dc++ 0.7xx clients)
+    [ "0.8" ] = msg_client_not_allowed,           -- searching for all clients that includes "0.8" (all dc++ 0.8xx clients)
+    [ "AirDC%+%+%s2" ] = msg_client_not_allowed,  -- searching for all AirDC++ 2.xx
+    [ "AirDC%+%+%s2.9" ] = msg_client_not_allowed,-- searching for all AirDC++ 2.9x
+    [ "AirDC%+%+%s3" ] = msg_client_not_allowed,  -- searching for all AirDC++ 3.xx
+    [ "AirDC%+%+%s3.0" ] = msg_client_not_allowed,-- searching for all AirDC++ 3.0x
 }
 
 

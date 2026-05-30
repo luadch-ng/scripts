@@ -1,0 +1,7 @@
+return {
+
+    msg_disconnect = "Du darfst diesen Hub momentan nicht betreten weil: Dein Grund",
+    msg_report     = "[ Levelcheck ]-> Der folgende User wurde getrennt: ",
+    msg_unknown    = "unbekannt",
+
+}

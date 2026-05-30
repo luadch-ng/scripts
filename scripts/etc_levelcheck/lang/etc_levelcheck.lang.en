@@ -1,0 +1,7 @@
+return {
+
+    msg_disconnect = "You are temporary not allowed to join the hub because: Your reason",
+    msg_report     = "[ Levelcheck ]-> The following user was disconnected: ",
+    msg_unknown    = "unknown",
+
+}

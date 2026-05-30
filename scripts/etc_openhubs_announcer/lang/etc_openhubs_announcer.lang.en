@@ -1,0 +1,16 @@
+return {
+
+    badmsg = [[
+
+        According to your tag you are connected to a public hub.
+        These are not tolerated on this hub. A misconduct notice
+        has been sent to the OPs.
+
+        If this does not apply, please contact the OPs immediately.
+
+        ]],
+
+    -- op_report = utf.format(op_report, nick, level)
+    op_report = "[[OPENHUBS]]--> The following user was identified as a user of a public hub: %s with profile [%s]",
+
+}
