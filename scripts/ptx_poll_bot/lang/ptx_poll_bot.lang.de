@@ -1,0 +1,138 @@
+-- ptx_poll_bot - deutsche Strings.
+--
+-- cmd / tCmds bleiben Englisch - das sind die vom User eingegebenen
+-- Befehls-Trigger, keine Anzeigetexte. Anzeigetexte in tMenu / tHelp /
+-- etc. sind lokalisiert.
+--
+-- Platzhalter [bot], [prefix], [cPoll], [cVote], [cPollAdd], [cPollDel],
+-- [cOldPoll], [cOldPollDel] werden beim Script-Load durch die
+-- LangTranslate-Routine in ptx_poll_bot.lua ersetzt. Wörtlich
+-- stehen lassen.
+
+return {
+
+    cmd = "poll",
+    tCmds = {
+        poll = "show",
+        vote = "vote",
+        pollusers = "users",
+        oldpoll = "showold",
+        polladd = "add",
+        pollclose = "close",
+        polldel = "del",
+        oldpolldel = "delold",
+        pollhelp = "help",
+    },
+
+    curPollErased = "Aktuelle Umfrage wurde gelöscht.",
+    NoPollNoDel = "Es gibt keine Umfrage - ich lösche also nichts.",
+    NoPollNoClose = "Es gibt keine aktive Umfrage - ich schließe also nichts.",
+    NoPollNoVote = "Es gibt keine aktive Umfrage. Du kannst gerade nicht abstimmen. OP-Befehle können im Mainchat ausgeführt werden.",
+
+    Error = {
+        BadPollAdd = "Syntaxfehler. Der UMFRAGENAME muss ein einzelnes Wort sein. Eingabe: [prefix][cPollAdd] <umfragename> <maxstimmen_pro_user> <anzahl_antworten> <umfragethema/-frage>",
+        BaddPollAddEx = "Beispiel: [prefix][cPollAdd] MeineErsteUmfrage 1 2 Funktioniert_es?",
+        BadConvert = "Ein Fehler ist aufgetreten. Alle aktuellen Umfrage-Einstellungen werden gelöscht.",
+        Err = "Fehler!",
+        NoList = "ist nicht in meiner Liste.",
+        BadOldDel = "Syntaxfehler. Eingabe: [prefix][cOldPollDel] <umfragename> um eine alte Umfrage zu löschen.",
+        NonExistingOld = "Ich kann keine nicht existierende alte Umfrage löschen. [prefix][cOldPollDel] listet alle alten Umfragen.",
+        ScriptError = "ALARM! Mir ist schlecht...",
+    },
+
+    BadPollName = "Deine Umfrage wurde abgelehnt - der Umfragename wurde bereits verwendet.",
+    Plus20 = "Deine Umfrage hat mehr als 20 Antworten. 20 sollten reichen.",
+    More2Ans = "Deine Umfrage hat nicht mehr als 2 Antworten. Umfrage abgelehnt.",
+    pplNeedVote = "Du erstellst eine Umfrage und niemand kann abstimmen. Umfrage abgelehnt.",
+    ToMuchVotes = "Du kannst nicht so viele oder mehr Stimmen vergeben wie es Antworten gibt. Umfrage abgelehnt.",
+    GoGandalf = "Geh zum Wizard - er wurde per PM gestartet",
+
+    Gandalf = {
+        Wizard = "UMFRAGE-WIZARD",
+        WizKid = "Umfrage-Ersteller",
+        Name = "Umfragename",
+        Votes = "User-Stimmen",
+        PollQs = "Umfrage-Frage",
+        PollAns = "Anzahl Antworten",
+    },
+
+    Answer = "Antwort",
+    PollIsConfig = "Du kannst gerade keine Umfrage erstellen - eine Umfrage wird gerade konfiguriert von",
+    CloseRunPoll = "Eine Umfrage läuft gerade, schließe sie zuerst.",
+    YayNewPoll = "Danke. Die folgende Umfrage wurde erstellt und ist jetzt aktiv.",
+    NewPoll = "NEUE UMFRAGE VERFÜGBAR",
+    PleaseVote = "BITTE ABSTIMMEN",
+    Poll = "UMFRAGE",
+
+    PollMe = {
+        CanVote = "Du kannst abstimmen",
+        GiveAns = "Stimme ab mit [cVote] 1 oder 2 oder 3 etc.",
+        Created = "Umfrage erstellt von",
+        CreatedOn = "Umfrage erstellt am",
+        PollClose = "Umfrage geschlossen am",
+    },
+
+    MaxVote = {
+        Voted = "Du hast bereits abgestimmt",
+        FinishIt = "mal. Du kannst nicht erneut abstimmen. Eingabe [cPoll] (ohne Nummer) zeigt die Statistik.",
+    },
+
+    VotedAns = "Du hast bereits für diese Antwort gestimmt, bitte wähle eine andere.",
+    ThanksForVote = "Danke für deine Stimme",
+    CheckPoll = "Du kannst die Umfrage jederzeit prüfen indem du show per PM an [bot] schreibst",
+    NextPoll = "Bitte stimme bei unserer nächsten Umfrage wieder ab.",
+    YouHave = "Du hast",
+    VotesLeft = "Stimme(n) übrig für diese Umfrage. Stimm gerne nochmal ab.",
+    Voted = "Abgestimmt",
+    NoPollActive = "Es gibt keine aktive Umfrage. Du kannst gerade nicht abstimmen.",
+    Votes = "Stimme(n)",
+    TotVotes = "Stimmen gesamt",
+    NoVoteNoOld = "Niemand hat in dieser Umfrage abgestimmt. Sie kann nicht zu den alten Umfragen verschoben werden. Bitte mit [prefix][cPollDel] löschen.",
+    ClosedPoll = "GESCHLOSSENE UMFRAGE",
+    NowOld = "Die aktuelle Umfrage wurde geschlossen und zu den alten Umfragen verschoben.",
+    NoOld = "Es gibt keine alten Umfragen.",
+    BadOldPoll = "Eingabe: [prefix][cOldPoll] <umfragename>. Hier sind die alten Umfragen",
+    OldPoll = "ALTE UMFRAGE",
+    OldSorry = "Sorry, die alte Umfrage",
+    SorryBadOld = "existiert nicht. [prefix][cOldPoll] listet alle älteren Umfragen.",
+    PollVotes = "UMFRAGE-Stimmen",
+    With = "mit",
+    Offline = "Offline (kein Share)",
+    TotUsers = "User gesamt",
+    NoPoll = "Es gibt aktuell keine aktive UMFRAGE.",
+    DelOldPoll = "Alte Umfrage",
+    OldDel = "wurde endgültig gelöscht.",
+
+    tMenu = {
+        Root = "Umfrage",
+        PollHelp = "Umfrage-Hilfe",
+        PollVoters = "User die abgestimmt haben",
+        ShowPoll = "Umfrage anzeigen",
+        OldPoll = "Alte Umfragen anzeigen",
+        AddPoll = "Neue Umfrage erstellen",
+        AddVotes = "Wie oft kann ein User abstimmen",
+        AddAns = "Anzahl Antworten",
+        AddSubject = "Umfrage-Thema",
+        Name = "Umfragename",
+        ClosePoll = "Aktuelle Umfrage schließen",
+        DelPoll = "Aktuelle Umfrage löschen",
+        OldDelPoll = "Alte Umfrage löschen",
+        Vote = "In aktiver Umfrage abstimmen",
+    },
+
+    tHelp = {
+        ViewPoll = "Aktuelle Umfrage anzeigen",
+        Nr = "nr",
+        VotePoll = "Abstimmen wenn eine Umfrage aktiv ist",
+        Voted = "Wer hat bereits abgestimmt?",
+        ListOld = "Liste aller alten Umfragen",
+        Name = "umfragename",
+        ViewOld = "Alte Umfrage anzeigen",
+        CreateOpt = "<name> <maxstimmen> <nr> <thema>",
+        Create = "Neue Umfrage erstellen",
+        Close = "Aktuelle Umfrage schließen und zu den alten hinzufügen",
+        Del = "Aktuelle Umfrage löschen (wird nicht zu den alten hinzugefügt)",
+        DelOld = "Alte Umfrage endgültig löschen",
+    },
+
+}
