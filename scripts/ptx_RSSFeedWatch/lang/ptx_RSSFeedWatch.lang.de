@@ -1,0 +1,182 @@
+-- ptx_RSSFeedWatch - deutsche Strings.
+--
+-- Display-Layout-Texte (Settings-Tabelle, lastfeed/listfeeds/listusers
+-- Spalten-Ausgabe) behalten die englische Spalten-Struktur; nur die
+-- Spalten-Header und Standalone-Status-Messages werden lokalisiert.
+
+return {
+
+    -- RC-Menü-Container
+    ucmd_menu_root           = "RSSFeedWatch",
+    ucmd_menu_settings_group = "Einstellungen",
+
+    -- RC-Menü-Labels
+    ucmd_label_help        = "Hilfe anzeigen",
+    ucmd_label_feeds       = "Feed-Einstellungen setzen",
+    ucmd_label_lastfeed    = "Letzte Feeds anzeigen",
+    ucmd_label_listusers   = "Aktive Feed-User auflisten",
+    ucmd_label_listfeeds   = "Verfügbare Feeds auflisten",
+    ucmd_label_addfeed     = "Feed hinzufügen",
+    ucmd_label_forcefeed   = "Force-Feed umschalten",
+    ucmd_label_deletefeed  = "Feed löschen",
+    ucmd_label_getfeed     = "Nächsten Feed holen",
+    ucmd_label_mutefeed    = "Feed muten//entmuten",
+    ucmd_label_refresh     = "Feed-Refresh setzen",
+    ucmd_label_maxfeeds    = "Anzuzeigende Feeds setzen",
+    ucmd_label_maxcache    = "Zu cachende Feeds setzen",
+    ucmd_label_maxwidth    = "Max-Breite setzen",
+    ucmd_label_focefeedpm  = "Force-Feeds zu PM umschalten",
+    ucmd_label_msgtopm     = "Messages zu PM umschalten",
+    ucmd_label_simple      = "Einfache Anzeige umschalten",
+    ucmd_label_settings    = "Einstellungen anzeigen",
+
+    -- ucmd-Input-Platzhalter (ohne "%[line:"-Präfix)
+    ucmd_input_feeds       = " on/off/m/p",
+    ucmd_input_feed_number = " Feed-Nummer ",
+    ucmd_input_url         = " URL ",
+    ucmd_input_tag         = " Tag ",
+    ucmd_input_minutes     = " Anzahl Minuten ",
+    ucmd_input_num_feeds   = " Anzahl Feeds ",
+    ucmd_input_num_chars   = " Anzahl Zeichen ",
+    ucmd_input_getfeed_prefix = " Feed-Nummer, leer für ",
+
+    -- Modul-Ebene
+    msg_usage              = "Benutzung: [+!#]rss cmd, Eingabe [+!#]rss feedhelp zeigt weitere Hinweise.",
+    msg_denied             = "Dir ist es nicht erlaubt diesen Befehl zu nutzen.",
+
+    -- Bot-Beschreibung
+    bot_desc               = "RSSFeedWatch",
+
+    -- Body-Block-Dekoration
+    label_feedwatch_body   = "FeedWatch",
+
+    -- Generische Fehler (parametrisiert)
+    msg_err_invalid_feed_number = "Fehler! '%s' ist keine gültige Feed-Nummer.",
+    msg_err_invalid_minutes     = "Fehler! '%s' ist keine gültige Minuten-Anzahl.",
+    msg_err_invalid_feed_count  = "Fehler! '%s' ist keine gültige Feed-Anzahl.",
+    msg_err_invalid_char_count  = "Fehler! '%s' ist keine gültige Zeichen-Anzahl.",
+
+    -- feeds-Befehl
+    msg_feeds_already_disabled = "%s, Feeds sind für dich bereits deaktiviert.",
+    msg_feeds_already_enabled  = "%s, Feeds sind für dich bereits aktiviert und werden gesendet als %s",
+    msg_feeds_already_disabled_set = "%s, Feeds sind für dich bereits deaktiviert und werden bei Aktivierung als %s gesendet.",
+    msg_feeds_already_set_type = "%s, Feeds sind bereits gesetzt auf %s und sind aktuell %s",
+    msg_feeds_current          = "Feeds sind aktuell %s aktueller Message-Typ: %s",
+    msg_feeds_error_selection  = "**Fehler in der Auswahl. Benutzung: %s%s <on/off/p/m>",
+    msg_feeds_usage_selection  = "Fehler in der Auswahl. Benutzung: %s%s <on/off/p/m>",
+    desc_feeds                 = "Setze deine RSS-Feed-Option",
+    ucmd_feeds_input           = " %[line:on=aktiv, off=inaktiv, m=main, p=pm]",
+
+    -- lastfeed-Befehl
+    msg_lastfeed_usage    = "Benutzung: [+!#]rss lastfeed <Feed-Nummer>",
+    msg_lastfeed_no_cache = "Aktuell sind keine gecachten Feeds vorhanden.",
+    desc_lastfeed         = "Letzte Feeds von <Feed-Nummer> anzeigen",
+
+    -- listfeeds-Befehl
+    msg_listfeeds_header  = "Auflistung aktivierter Feeds:\n\n",
+    msg_listfeeds_muted   = " (gemutet)",
+    msg_listfeeds_empty   = "Fehler, es sind keine Feeds im Script gesetzt.",
+    desc_listfeeds        = "Aktivierte Feeds auflisten",
+
+    -- listusers-Befehl
+    label_listusers_active     = " Aktive User",
+    label_listusers_nickname   = "Nick",
+    label_listusers_msgtype    = "Message-Typ",
+    label_listusers_status     = "Status",
+    desc_listusers             = "Aktive Feed-User auflisten",
+
+    -- Gemeinsame Status-/Werte-Labels (von mehreren Handlern genutzt)
+    val_enabled      = "aktiviert",
+    val_disabled     = "deaktiviert",
+    val_main_chat    = "Mainchat       ",
+    val_pm           = "Private Message",
+    val_muted        = "gemutet",
+    val_showing      = "sichtbar",
+    val_pm_short     = "PM",
+    val_main_short   = "Main",
+    val_on_short     = "an",
+    val_off_short    = "aus",
+
+    -- feedhelp-Befehl
+    label_feedhelp_header_a = " Befehls-Hilfe",
+    label_feedhelp_header_b = "Befehl",
+    label_feedhelp_header_c = "Beschreibung",
+    desc_feedhelp           = " Hilfe",
+
+    -- addfeed-Befehl
+    msg_addfeed_usage   = "Benutzung: [+!#]rss addfeed <URL> <Tag>",
+    msg_addfeed_dup_url = "Feed mit URL %s existiert bereits.",
+    msg_addfeed_dup_tag = "Feed mit Tag %s existiert bereits.",
+    msg_addfeed_ok      = "Neuer Feed hinzugefügt.",
+    desc_addfeed        = "Neuen RSS-Feed hinzufügen <URL> <Tag>",
+
+    -- forcefeed-Befehl
+    msg_forcefeed_usage = "Benutzung: [+!#]rss forcefeed <Feed-Nummer>",
+    msg_forcefeed_set   = "ForceFeed ist jetzt %s für %s (%s).",
+    desc_forcefeed      = "Force-Feed umschalten <Feed-Nummer>",
+
+    -- delfeed-Befehl
+    msg_delfeed_usage = "Benutzung: [+!#]rss delfeed <Feed-Nummer>",
+    msg_delfeed_ok    = "%s (%s) ist jetzt gelöscht.",
+    desc_delfeed      = "Feed löschen <Feed-Nummer>",
+
+    -- refresh-Befehl
+    msg_refresh_usage = "Benutzung: [+!#]rss refresh <Minuten>",
+    msg_refresh_set   = "Refresh-Zeit ist jetzt %s Minuten.",
+    desc_refresh      = "Feed-Refresh-Zeit setzen <Minuten>",
+
+    -- getfeed-Befehl
+    desc_getfeed_all  = "Alle Feeds jetzt holen.",
+    desc_getfeed_next = "Nächsten Feed jetzt holen.",
+    label_get_all_feeds = "alle Feeds",
+    label_get_next_feed = "nächster Feed",
+
+    -- mutefeed-Befehl
+    msg_mutefeed_usage   = "Benutzung: [+!#]rss mutefeed <Feed-Nummer>",
+    msg_mutefeed_forced  = "Feed %s (%s) ist forciert und kann nicht gemutet werden.",
+    msg_mutefeed_set     = "Feed %s (%s) ist jetzt %s.",
+    msg_mutefeed_setup   = "Setze zuerst die Feed-Einstellungen.",
+    desc_mutefeed        = "Feed muten/entmuten <Feed-Nummer>",
+
+    -- maxfeeds-Befehl
+    msg_maxfeeds_usage = "Benutzung: [+!#]rss maxfeeds <Anzahl Feeds>",
+    msg_maxfeeds_set   = "Max Feeds ist jetzt %s.",
+    desc_maxfeeds      = "Max anzuzeigende Feeds setzen <Anzahl Feeds>",
+
+    -- maxcache-Befehl
+    msg_maxcache_usage = "Benutzung: [+!#]rss maxcache <Anzahl Feeds>",
+    msg_maxcache_set   = "Max Cache ist jetzt %s.",
+    desc_maxcache      = "Max zu cachende Feeds setzen <Anzahl Feeds>",
+
+    -- maxwidth-Befehl
+    msg_maxwidth_usage = "Benutzung: [+!#]rss maxwidth <Anzahl Zeichen>",
+    msg_maxwidth_set   = "Max-Breite ist jetzt %s Zeichen.",
+    desc_maxwidth      = "Max anzuzeigende Zeichen setzen <Anzahl Zeichen>",
+
+    -- focefeedpm / msgtopm / simple Toggles
+    msg_focefeedpm_set = "Force-Feeds werden jetzt angezeigt in %s.",
+    desc_focefeedpm    = "Force-Feeds zu PM oder Main umschalten",
+    msg_msgtopm_set    = "Messages werden jetzt angezeigt in %s.",
+    desc_msgtopm       = "Messages zu PM oder Main umschalten",
+    msg_simple_set     = "Einfaches Layout ist jetzt %s.",
+    desc_simple        = "Einfaches Feed-Layout umschalten",
+
+    -- settings-Befehl
+    label_settings_header   = " Einstellungen",
+    label_settings_setting  = "Einstellung:",
+    label_settings_value    = "Wert",
+    desc_settings           = " Einstellungen",
+
+    -- GetFeed Timing/Labels
+    label_processed_in   = "Verarbeitet in:",
+    val_seconds          = "Sekunden.",
+    val_part_second      = "Sekundenbruchteilen.",
+
+    -- "New Feed" / "New Feeds" Header in Feed-Broadcasts
+    label_new_feed_header_simple  = "[ %s ] Neuer Feed%s von: %s",
+    label_new_feed_header_pretty  = "[ %s ] Neuer Feed%s von: %s",
+
+    -- lastfeed Cached-Header
+    label_cached_feed = "Gecachter Feed",
+
+}
