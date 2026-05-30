@@ -1,0 +1,13 @@
+return {
+
+    ucmd_menu_ct2_add = { "Ändern", "Speed Info", "hinzufügen" },
+    ucmd_menu_ct2_del = { "Ändern", "Speed Info", "entfernen" },
+    ucmd_line = "Neue Geschwindigkeit:",
+
+    msg_denied = "Du bist nicht befugt diesen Befehl zu nutzen.",
+    msg_fail   = "User nicht gefunden.",
+    msg_add    = "Eintrag geändert.",
+    msg_del    = "Eintrag entfernt.",
+    msg_usage  = "[+!#]csi add <SID> <Geschwindigkeitsinfo zum User> / [+!#]csi del <SID>",
+
+}

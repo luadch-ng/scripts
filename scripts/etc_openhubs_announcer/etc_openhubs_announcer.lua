@@ -11,59 +11,61 @@
 ]]--
 
 --[[
-    
-        etc_openhubs_announcer.lua v0.2 by Motnahp
-        
-        - Script übersichtlicher + Editierbare teile eingefügt
-        - Prüft nun nur noch die User die verbunden sind nach einer bestimmten Zeit und nicht mehr beim login.
-            >> recheckdelay dafür editieren (2 Minuten voreingestellt)
 
-            
-       etc_openhubs_announcer.lua v0.1 by Motnahp
-       
-       - Prüft die User kurz nach dem Login auf öffentliche Hubs
-            >> delaylogin dafür editieren (120 Sekunden voreingestellt)
-       
+        etc_openhubs_announcer.lua by Motnahp
+
+        v0.3:
+            - i18n: route warn + op-report msgs through lang
+              (badmsg, op_report). Part of luadch-ng/scripts #31 PR-2.
+
+        v0.2:
+            - Script übersichtlicher + Editierbare teile eingefügt
+
+        v0.1:
+            - Prüft die User kurz nach dem Login auf öffentliche Hubs
+
 ]]--
 
---[[ Settings ]]--       
+--[[ Settings ]]--
 
 -- Nicht Editieren --
 local scriptname = "etc_openhubs_announcer"
+local scriptversion = "0.3"
 local hub_bot = hub.getbot()
 local min = 60
 local start = os.time()
+
+local scriptlang = cfg.get( "language" )
+local lang, err = cfg.loadlanguage( scriptlang, scriptname ); lang = lang or {}; err = err and hub.debug( err )
+
 --funtions
 local reportItTo
 local check
 -->> nachfolgende Settings sind editierbar -->>
-local recheck = true -- sollen im Abstand von recheckdelay alle User geprüft werden? (true = Ja / false = Nein)
-local maxchecklvl = 50 -- maximale Level bis zu dem geprüft werden soll (einschliesslich)
-local reportlvl = 60 -- minimale Level zu dem gemeldet werden soll (einschliesslich)
-local warnUser = false -- soll der User benachrichtigt/verwarnt werden, dass er OpenHubs offen hat? (true = Ja / false = Nein)
-local sendMain = true -- soll im Mainchat an die OPs gemeldet werden? (true = Ja / false = Nein)
-local sendPM = true -- soll per PM an die OPs gemeldet werden? (true = Ja / false = Nein)
-local recheckdelay = 3 --> Zeitverzögerung des Checks (in Minuten)
+local recheck = true       -- sollen im Abstand von recheckdelay alle User geprüft werden?
+local maxchecklvl = 50     -- maximale Level bis zu dem geprüft werden soll (einschliesslich)
+local reportlvl = 60       -- minimale Level zu dem gemeldet werden soll (einschliesslich)
+local warnUser = false     -- soll der User benachrichtigt/verwarnt werden?
+local sendMain = true      -- soll im Mainchat an die OPs gemeldet werden?
+local sendPM = true        -- soll per PM an die OPs gemeldet werden?
+local recheckdelay = 3     --> Zeitverzögerung des Checks (in Minuten)
 
 -- Nachricht an den User
-local badmsg = [[ 
+local badmsg = lang.badmsg or [[
 
-        Du  bist laut deines Tags in einem Öffentlichen Hub,
-        diese sind in unserem Hub nicht geduldet. Eine Nachricht 
-        über dein Fehlverhalten wurde an alle OP's gesendet.
-        
-        Fall das nicht zutrifft melde dich bitte unverzüglich bei den OP's
-        
+        According to your tag you are connected to a public hub.
+        These are not tolerated on this hub. A misconduct notice
+        has been sent to the OPs.
+
         ]]
--- Nachricht an die OPs
-local opmsg = "[[OPENHUBS]]--> Folgender User wurde als Benutzer eines öffentlichen Hubs registriert "
--- das Layout der Nachricht kann des weiteren in Zeile 81 verändert werden
+-- op_report template: utf.format(op_report, nick, level)
+local op_report = lang.op_report or "[[OPENHUBS]]--> The following user was identified as a user of a public hub: %s with profile [%s]"
 
 --<< ende des editierbaren Teils --<<
 
 recheckdelay = recheckdelay * min
 
---[[   Code   ]]--     
+--[[   Code   ]]--
 
 hub.setlistener("onTimer", {},
     function()
@@ -75,29 +77,22 @@ hub.setlistener("onTimer", {},
         end
         return nil
     end
-) 
- 
+)
+
 function check(user)
     local hn, hr, ho = user:hubs()
     -- Phase 8a F-INF-1d (luadch-ng/luadch#121): hn is nil when the
-    -- client did not send HN in BINF. Pre-fix used the string
-    -- "unbekannt" as a fallback, but then `(open > 0)` compared the
-    -- string to a number and Lua 5.4 raised "attempt to compare
-    -- string with number" before the second `(open == "unbekannt")`
-    -- branch could fire. Use nil directly and split the conditions.
+    -- client did not send HN in BINF.
     local user_nick = user:nick()
     local user_level = user:level()
     local level = cfg.get("levels")[user_level] or "Unreg"
-    local msg =""
 
     if user_level <= maxchecklvl then
-        -- Trigger on either: declared open hubs > 0, OR client did
-        -- not declare HN at all (both are operator-relevant signals).
         if hn == nil or hn > 0 then
             if warnUser then
                 user:reply(badmsg, hub.getbot(), hub.getbot())
             end
-            msg = msg..opmsg..user_nick.." mit Profil ["..level.."]" -- Zeile die für die OPs sichtbar ist
+            local msg = utf.format(op_report, user_nick, level)
             reportItTo(reportlvl, msg)
         end
     end
@@ -117,6 +112,6 @@ function reportItTo(lvl, msg)
     end
 end
 
-hub.debug( "** Loaded " .. scriptname .. ".lua **" )
+hub.debug( "** Loaded " .. scriptname .. " " .. scriptversion .. " **" )
 
---[[   End    ]]--       
+--[[   End    ]]--

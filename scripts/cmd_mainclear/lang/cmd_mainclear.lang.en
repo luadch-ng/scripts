@@ -1,0 +1,12 @@
+return {
+
+    help_title = "Clear",
+    help_usage = "[+!#]clear",
+    help_desc = "sends a few empty lines to mainchat and seems to clear it",
+
+    msg_denied = "You are not allowed to use this command.",
+    msg_done_by = "\t Mainclean done by ",
+
+    ucmd_menu = { "OP-Menu", "Clear main" },
+
+}

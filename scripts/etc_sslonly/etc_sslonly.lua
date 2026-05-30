@@ -10,17 +10,19 @@
 
 --[[
 
-    etc_sslonly_0.2 by pulsar
+    etc_sslonly by pulsar
 
         Version: Luadch_0.08
-        
-            v0.1
 
-                - SSL/TLS Checker, um zu gewährleisten das User mit deaktivierter SSL/TLS-Funktion disconnected werden.
-                
+            v0.3
+                - i18n: route usermsg / teammsg / mainmsg through lang.
+                  Part of luadch-ng/scripts #31 PR-2.
+
             v0.2
-            
                 - geändert: Listener
+
+            v0.1
+                - SSL/TLS Checker, um zu gewährleisten das User mit deaktivierter SSL/TLS-Funktion disconnected werden.
 
 ]]--
 
@@ -32,36 +34,20 @@
 
 --> Scriptname
 local scriptname = "etc_sslonly"
+local scriptversion = "0.3"
 
+local scriptlang = cfg.get( "language" )
+local lang, err = cfg.loadlanguage( scriptlang, scriptname ); lang = lang or {}; err = err and hub.debug( err )
 
 --> Warnmeldung an User mit deaktivierter SSL/TLS-Funktion
-local usermsg = [[
+local usermsg = lang.usermsg or [[
 
-                                                          +++  WARNUNG - BITTE LESEN +++
+                                                          +++  WARNING - PLEASE READ +++
 
-        Die SSL/TLS Funktion deines Clienten ist deaktiviert oder das Zertifikat kann nicht eingelesen werden.
-
-        Folgendes ist zu tun:
-
-         - Gehe in deine Client Einstellungen in das Menu "Sicherheitszertifikate"
-         - Kontrolliere ob der Pfad für den Privaten Schlüssel richtig ist. (DeinClient\Certificates\client.key)
-         - Kontrolliere ob der Pfad für das Zertifikat richtig ist. (DeinClient\Certificates\client.crt)
-         - Und ob sich das Zertifikat auch wirklich in diesem Verzeichnis befindet. (DeinClient\Certificates\)
-         - Dann setze dort alle Haken bei den TLS Features.
-
-        Sollte es danach noch immer nicht funktionieren hilft es eventuell ein neues Zertifikat zu erstellen.
-        Vorgehensweise dazu:
-
-         - Gehe in deine Client Einstellungen in das Menu "Sicherheitszertifikate"
-         - Lösche dort in allen drei Feldern den vollständigen Pfad heraus und bestätige unten auf OK.
-         - Client schliessen
-         - Folgende Dateien löschen:  Certificates/client.crt     &   Certificates/client.key
-         - Client starten und in den Settings im Menu "Sicherheitzertifikate" Den Button zum erstellen eines neuen
-           Zertifikates drücken.
-         - Client neustarten
-
-
-        MfG Das Hubteam
+        The SSL/TLS feature of your client is disabled or the certificate cannot be loaded. Open your client
+        settings ("Security certificates" menu), check the path to the private key + certificate, check the
+        certificate exists, enable all TLS feature checkboxes. If it still does not work, generate a new
+        certificate via the "Security certificates" menu.
 
     ]]
 
@@ -72,13 +58,13 @@ local informteam = true
 local teamlevel = 60
 
 --> Nachricht an das Hubteam
-local teammsg = "Warnung: Folgender User wurde disconnected weil seine SSL/TLS-Funktion deaktiviert ist:  "
+local teammsg = lang.teammsg or "Warning: the following user was disconnected because their SSL/TLS feature is disabled:  "
 
 --> Sollen alle anderen User über den geblockten User im Main informiert werden? (true=JA/false=NEIN)
 local informall = true
 
 --> Nachricht an die User
-local mainmsg = "Warnung: Folgender User wurde disconnected weil seine SSL/TLS-Funktion deaktiviert ist:  "
+local mainmsg = lang.mainmsg or "Warning: the following user was disconnected because their SSL/TLS feature is disabled:  "
 
 
 ----------
@@ -115,7 +101,7 @@ hub.setlistener("onInf", {}, checkSSL)
 --hub.setlistener("onLogin", {}, checkSSL) --> optional
 --hub.setlistener("onSearch", {}, checkSSL) --> optional
 
-hub.debug("** Loaded "..scriptname..".lua **")
+hub.debug("** Loaded "..scriptname.." "..scriptversion.." **")
 
 ---------
 --[END]--

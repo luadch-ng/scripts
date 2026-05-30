@@ -1,0 +1,17 @@
+return {
+
+    -- %s = maxHubs limit
+    badmsg = [[
+
+        Du bist in mehr Hubs als erlaubt, sieh im Regelwerk nach.
+        Zur Zeit sind nur %s Hubs erlaubt.
+        Eine Nachricht über ein Fehlverhalten wurde an die OP's gesendet.
+
+        Falls das nicht zutrifft melde dich bitte bei den OP's.
+
+        ]],
+
+    -- op_report = utf.format(opmsg, nick, level, hubs)
+    op_report = "[[MAXHUBS]]--> %s mit Profil [%s] wurde mit %s Hubs entdeckt",
+
+}

@@ -1,0 +1,12 @@
+return {
+
+    help_title = "Clear",
+    help_usage = "[+!#]clear",
+    help_desc = "sendet einige leere Zeilen in den Mainchat und scheint diesen zu säubern",
+
+    msg_denied = "Du bist nicht befugt diesen Befehl zu benutzen.",
+    msg_done_by = "\t Mainclean durchgeführt von ",
+
+    ucmd_menu = { "OP-Menü", "Main säubern" },
+
+}

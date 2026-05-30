@@ -1,0 +1,5 @@
+return {
+
+    msg_client_not_allowed = "Dein Client ist nicht erlaubt",
+
+}

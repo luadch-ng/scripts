@@ -1,0 +1,35 @@
+return {
+
+    usermsg = [[
+
+                                                          +++  WARNING - PLEASE READ +++
+
+        The SSL/TLS feature of your client is disabled or the certificate cannot be loaded.
+
+        What to do:
+
+         - Open your client settings, menu "Security certificates"
+         - Check that the path to the private key is correct. (YourClient\Certificates\client.key)
+         - Check that the path to the certificate is correct. (YourClient\Certificates\client.crt)
+         - Check that the certificate actually exists in that directory. (YourClient\Certificates\)
+         - Then enable all the TLS feature checkboxes.
+
+        If it still does not work, creating a new certificate may help.
+        Steps:
+
+         - Open your client settings, menu "Security certificates"
+         - Clear the full path in all three fields and confirm with OK.
+         - Close the client.
+         - Delete the following files:  Certificates/client.crt     &   Certificates/client.key
+         - Start the client and in the "Security certificates" menu press the button to generate a new
+           certificate.
+         - Restart the client.
+
+
+        Best regards, the Hub team
+
+    ]],
+    teammsg = "Warning: the following user was disconnected because their SSL/TLS feature is disabled:  ",
+    mainmsg = "Warning: the following user was disconnected because their SSL/TLS feature is disabled:  ",
+
+}

@@ -11,7 +11,12 @@
 
         requested by: Sopor
 
-        - Fix issue #27: https://github.com/luadch/scripts/issues/27
+        v0.2:
+            - i18n: route the kick reason + ops report through lang.
+              Part of #31 PR-2.
+
+        v0.1:
+            - Fix issue #27: https://github.com/luadch/scripts/issues/27
 
 ]]--
 
@@ -21,7 +26,10 @@
 --------------
 
 local scriptname = "etc_levelcheck"
-local scriptversion = "0.1"
+local scriptversion = "0.2"
+
+local scriptlang = cfg.get( "language" )
+local lang, err = cfg.loadlanguage( scriptlang, scriptname ); lang = lang or {}; err = err and hub.debug( err )
 
 local permission = {  -- who is allowed to join the hub?
 
@@ -48,9 +56,9 @@ local report_hubbot = true -- send report to hubbot?
 local report_opchat = false -- send report to opchat?
 
 --// msgs
-local msg_disconnect = "You are temporary not allowed to join the hub because: Your reason"
-local msg_report = "[ Levelcheck ]-> The following user was disconnected: "
-local msg_unknown = "unknown"
+local msg_disconnect = lang.msg_disconnect or "You are temporary not allowed to join the hub because: Your reason"
+local msg_report     = lang.msg_report     or "[ Levelcheck ]-> The following user was disconnected: "
+local msg_unknown    = lang.msg_unknown    or "unknown"
 
 
 ----------

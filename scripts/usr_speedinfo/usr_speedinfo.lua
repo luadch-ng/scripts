@@ -15,6 +15,9 @@
     - Above command will permanently change the email of the user to the given connection speed info.
     - Instead of the Email, one can use any other field of the INF. This is controlled by the variable "field".
 
+    v0.04:
+        - i18n: route msgs + ucmd_menu through lang. Part of #31 PR-2.
+
     v0.03: by pulsar
         - small fix in onbmsg, hook_1, hook_2 func
 
@@ -25,7 +28,10 @@
 ]]--
 
 local scriptname = "usr_speedinfo"
-local scriptversion = "0.03"
+local scriptversion = "0.04"
+
+local scriptlang = cfg.get( "language" )
+local lang, err = cfg.loadlanguage( scriptlang, scriptname ); lang = lang or {}; err = err and hub.debug( err )
 
 local path = "scripts/data/usr_speedinfo.tbl"
 local user_tbl = util.loadtable( path ) or {}
@@ -37,15 +43,15 @@ local cmd = "csi"
 local param_add = "add"
 local param_del = "del"
 
-local ucmd_menu_ct2_add = { "Change", "Speed Info", "add" }
-local ucmd_menu_ct2_del = { "Change", "Speed Info", "del" }
-local ucmd_line = "New Speed:"
+local ucmd_menu_ct2_add = lang.ucmd_menu_ct2_add or { "Change", "Speed Info", "add" }
+local ucmd_menu_ct2_del = lang.ucmd_menu_ct2_del or { "Change", "Speed Info", "del" }
+local ucmd_line         = lang.ucmd_line         or "New Speed:"
 
-local msg_denied = "You are not allowed to use this command."
-local msg_fail = "User not found."
-local msg_add = "Entry changed."
-local msg_del = "Entry removed."
-local msg_usage = "[+!#]csi add <SID> <connection speed info about user> / [+!#]csi del <SID>"
+local msg_denied = lang.msg_denied or "You are not allowed to use this command."
+local msg_fail   = lang.msg_fail   or "User not found."
+local msg_add    = lang.msg_add    or "Entry changed."
+local msg_del    = lang.msg_del    or "Entry removed."
+local msg_usage  = lang.msg_usage  or "[+!#]csi add <SID> <connection speed info about user> / [+!#]csi del <SID>"
 
 local onbmsg = function( user, command, parameters )
     if user:level( ) < minlevel then
