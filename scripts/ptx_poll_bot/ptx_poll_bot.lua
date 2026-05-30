@@ -9,6 +9,33 @@
     luadch-ng/scripts#24).
 ]]--
 
+--[[
+
+    ptx_poll_bot (luadch-ng fork)
+
+        v3.1:
+            - i18n: migrate from the hardcoded single-language
+              "scripts/data/ptx_poll_bot_english.lang" loaded by
+              util.loadtable() to the standard cfg.loadlanguage()
+              dispatch on cfg.get("language"). Lang files now live at
+              scripts/ptx_poll_bot/lang/ptx_poll_bot.lang.{de,en}.
+              Adds German translation. The cmd / tCmds command-trigger
+              fields stay English in both language files (they're
+              user-typed command words, not display labels).
+            - Bugfix: the OldPoll() handler had four hardcoded English
+              labels ("Total votes", "Poll created by", "Poll created
+              on", "Poll closed at") that survived previous lang work.
+              They now route through tLang.TotVotes / tLang.PollMe.*
+              so they translate alongside everything else.
+            - Bugfix: LangTranslate()'s flat-key branch wrote substituted
+              text to tLang.value (literal "value" key) instead of the
+              loop variable's key, so placeholders ([bot], [prefix],
+              [cPoll], ...) in flat lang entries were never substituted.
+              CheckPoll (which references [bot]) now resolves correctly.
+              Part of luadch-ng/scripts #31 PR-5.
+
+]]--
+
 -- Poll.Bot.v.1.3c in LUA 5.1
 -- Finally a good pollbot ;-)
 -- Created by TTB on 08 November 2006
@@ -125,7 +152,6 @@ local NoCmdVote = false
 local ShowShare = false
 
 -- The Files used by this script
-local polllang = "scripts/data/ptx_poll_bot_english.lang"
 local pollvotes = "scripts/data/ptx_poll_bot_pollvotes.tbl" -- Holds the voters of active poll
 local pollsettings = "scripts/data/ptx_poll_bot_pollsettings.tbl" -- Holds the settings of active poll
 local pollold = "scripts/data/ptx_poll_bot_pollold.tbl" -- Hold old polls
@@ -135,8 +161,12 @@ local util_loadtable = util.loadtable
 local util_savetable = util.savetable
 local hubcmd
 
-local tLang = util_loadtable( polllang ) or {}
---loadlua(polllang, polllang.. " for " ..botName.. "bot found, or could not be loaded")
+local scriptname = "ptx_poll_bot"
+local scriptversion = "3.1"
+
+local scriptlang = cfg.get( "language" )
+local tLang, err = cfg.loadlanguage( scriptlang, scriptname ); tLang = tLang or {}; err = err and hub.debug( err )
+
 local PollVotes = util_loadtable( pollvotes ) or {}
 --loadlua(pollvotes, pollvotes.." for "..botName.." not found")
 local PollSettings = util_loadtable( pollsettings ) or {}
@@ -178,7 +208,7 @@ local LangTranslate = function ()
 			end
 		else
 			text = StringTranslate(tostring(text))
-			tLang.value = text
+			tLang[value] = text
 		end
 	end
 end
@@ -484,7 +514,7 @@ local OldPoll = function(curUser, data)
 				local bar = DoBars(string.format("%.0f",(100/c)*OldPolls[namepoll]["votes"][a]),100,lengthbar)
 				ooTmp = ooTmp..a..". "..OldPolls[namepoll]["votes"][a].." " ..tLang.Votes.. "\t"..bar.." ("..string.format( "%.2f",(100/c)*OldPolls[namepoll]["votes"][a]).."%) " ..tLang.Votes.. "  "..OldPolls[namepoll]["active"][a].."\r\n"
 			end
-				ooTmp = ooTmp.."\r\nTotal votes: "..c.." (100.00%)\r\n"..string.rep("*",50).."\r\nPoll created by: "..OldPolls[namepoll]["currentcreator"].."\r\nPoll created on: "..OldPolls[namepoll]["date"].."\r\nPoll closed at: "..OldPolls[namepoll]["close"].."\r\n"..string.rep("*",50)
+				ooTmp = ooTmp.."\r\n"..tLang.TotVotes..": "..c.." (100.00%)\r\n"..string.rep("*",50).."\r\n"..tLang.PollMe.Created..": "..OldPolls[namepoll]["currentcreator"].."\r\n"..tLang.PollMe.CreatedOn..": "..OldPolls[namepoll]["date"].."\r\n"..tLang.PollMe.PollClose..": "..OldPolls[namepoll]["close"].."\r\n"..string.rep("*",50)
 		else
 			ooTmp = tLang.OldSorry.."  '"..namepoll.."'  "..tLang.SorryBadOld
 		end
@@ -647,10 +677,15 @@ hub.setlistener( "onStart", { },
 --------------------------------------------------------------------
 -- User connects
 --------------------------------------------------------------------
-hub.setlistener( "onLogin", { }, 
+hub.setlistener( "onLogin", { },
 	function(tUser)
 		if PollSettings["current"] == 2 and not PollVotes[tUser:nick()] then
 			ShowPollWithNoResult(tUser)
 		end
 	end
 )
+
+hub.debug( "** Loaded "..scriptname.." "..scriptversion.." **" )
+
+--[END]
+
