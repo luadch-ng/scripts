@@ -1,0 +1,101 @@
+-- etc_onlinecounter - English strings.
+--
+-- Format templates use the static "(s)" pseudo-plural form (e.g.
+-- "1 year(s)" instead of "1 year") for cross-locale safety. The DE
+-- file uses the matching "(e)" / "(n)" form. Both call sites pass
+-- only the integer values; no plural-helper arg is needed.
+
+return {
+
+    -- Stats display
+    label_stats_header     = "Stats:",
+    label_stats_nick       = "Nick:",
+    label_stats_total      = "Total uptime:",
+    msg_stats_block_warn   = "If your online time is lower than %d hours (%s) every month, your account will be blocked for download!",
+    label_stats_freemonth  = "Free month(s):",
+    label_stats_reason     = "Free month reason:",
+    label_stats_addedby    = "Added by:",
+
+    -- Generic errors
+    msg_no_record          = "*** Error: No record found for '%s'!",
+    msg_no_perm            = "*** Error: You are not allowed to use this command!",
+
+    -- toponline
+    msg_top_columns        = "Nr.\tTotal:\t\t\t\t\tSession:\t\tEntered Hub:\t\tLeft Hub:\t\t\tStatus:\tName:",
+    msg_top_header         = "Current Top Online:",
+    msg_online             = "*Online*",
+    msg_offline            = "*Offline*",
+    msg_too_high           = "*** Error: Only %d users in table, %d is too high!",
+    msg_table_empty        = "*** Error: Online Counter's table is currently empty!",
+
+    -- ucmd / help labels (shared)
+    label_show_top         = "Show Top %d Online Time",
+    label_show_topxy       = "Show Top X-Y Online Time",
+    label_show_user        = "Show User Online Time",
+    label_show_my          = "Show My Online Time",
+    label_set_user         = "Set User Online Time",
+    label_show_lowuptime   = "Show Users With Too Low Online Time",
+    label_add_safe         = "Add User To Safe List",
+    label_remove_safe      = "Remove User From Safe List",
+    label_show_safe        = "Show Users On Safe List",
+    label_show_help        = "Show Help",
+
+    -- ucmd input field labels
+    ucmd_input_nick        = "Nick",
+    ucmd_input_months      = "Months",
+    ucmd_input_reason      = "Reason",
+    ucmd_input_time        = "Time",
+    ucmd_input_xy          = "x-y",
+
+    -- Help-text positional args (the "<...>" placeholder for each command)
+    help_arg_xy            = "<X-Y>",
+    help_arg_nick          = "<nick>",
+    help_arg_settime       = "<nick> <time[m|h|d|w|M]>",
+    help_arg_setsafe       = "<nick> <months> <reason>",
+    msg_usage_header       = "Usage:",
+
+    -- hubtime / settime
+    msg_syntax_hubtime     = "*** Syntax Error: Type !%s hubtime <nick>",
+    msg_settime_set        = "New total time for %s is %s.",
+    msg_syntax_settime     = "*** Syntax Error: Type !%s settime <nick> <time[m|h|d|w|M]>",
+
+    -- userlowuptime
+    msg_lowuptime_header   = "Users with too low online time:",
+    msg_no_lowuptime       = "No users with too low online time.",
+
+    -- safe list (setsafe / delsafe / showsafe)
+    msg_syntax_setsafe     = "*** Syntax Error: Type !%s setsafe <nick> <months> <reason>",
+    msg_safe_max           = "Max 5 safe month.",
+    msg_safe_removed       = "%s no clean month is now remove because of %s.",
+    msg_safe_added         = "%s have get %d no clean month, because of %s.",
+    msg_safe_unsafe        = "%s is removed safe list.",
+    msg_safe_notonlist     = "%s is not on safe list.",
+    msg_syntax_delsafe     = "*** Syntax Error: Type !%s delsafe <nick>",
+    msg_safelist_header    = "Users on safe list:",
+    msg_no_safelist        = "No users on safe list.",
+
+    -- opchat (op-only feedback messages)
+    op_user_safemonth_status = "%s is not checked because %s and have %d no free month back. (Online time: %s)",
+    op_user_deleted        = "%s user data is remove because the user is deleted.",
+    op_new_month           = "New Month started, all online data is checked.",
+    op_user_blocked        = "%s is blocked because of too low uptime.",
+
+    -- onLogin warning to the user
+    msg_login_warning      = "*** Your Total Online Time Is %s. If your Online Time is lower than %d hours every month, your account will be blocked!",
+
+    -- Block-message defaults (operator-overridable via tSettings.sNoSearchMsg / sNoCTMMsg)
+    msg_search_blocked     = "Your uptime is too low, search is blocked",
+    msg_ctm_blocked        = "Your uptime is too low, download is blocked",
+
+    -- Free-month seed values for fresh registrations
+    msg_freemonth_newreg   = "New reg",
+    msg_freemonth_addedby_bot = "Bot",
+
+    -- Format templates. Static "(s)" pseudo-plural in EN; DE uses
+    -- "(e)" / "(n)" form. Call sites pass only integer values.
+    fmt_duration           = "%i month(s), %i day(s), %i hour(s), %i minute(s)",
+    fmt_duration_year_prefix = "%i year(s), ",
+    fmt_hoursdays          = "%i day(s), %i hour(s)",
+    fmt_months             = "%i Month(s)",
+
+}

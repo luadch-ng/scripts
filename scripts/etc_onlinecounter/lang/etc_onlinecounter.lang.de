@@ -1,0 +1,100 @@
+-- etc_onlinecounter - deutsche Strings.
+--
+-- Format-Templates nutzen die "(e)" / "(n)"-Pseudo-Plural-Form
+-- (z.B. "1 Jahr(e)"). EN nutzt das passende "(s)"-Pendant. Beide
+-- Aufrufstellen uebergeben nur die Integer-Werte ohne Plural-Hilfe.
+
+return {
+
+    -- Stats-Anzeige
+    label_stats_header     = "Statistik:",
+    label_stats_nick       = "Nick:",
+    label_stats_total      = "Online-Zeit gesamt:",
+    msg_stats_block_warn   = "Wenn deine Online-Zeit unter %d Stunden (%s) pro Monat liegt, wird dein Account für Downloads gesperrt!",
+    label_stats_freemonth  = "Freimonat(e):",
+    label_stats_reason     = "Freimonat-Grund:",
+    label_stats_addedby    = "Hinzugefügt von:",
+
+    -- Generische Fehler
+    msg_no_record          = "*** Fehler: Kein Eintrag gefunden für '%s'!",
+    msg_no_perm            = "*** Fehler: Dir ist es nicht erlaubt diesen Befehl zu nutzen!",
+
+    -- toponline
+    msg_top_columns        = "Nr.\tGesamt:\t\t\t\t\tSession:\t\tHub betreten:\t\tHub verlassen:\t\tStatus:\tName:",
+    msg_top_header         = "Aktuelle Top-Online-Liste:",
+    msg_online             = "*Online*",
+    msg_offline            = "*Offline*",
+    msg_too_high           = "*** Fehler: Nur %d User in der Tabelle, %d ist zu hoch!",
+    msg_table_empty        = "*** Fehler: Online-Counter-Tabelle ist gerade leer!",
+
+    -- ucmd / Hilfe-Labels (gemeinsam genutzt)
+    label_show_top         = "Top %d Online-Zeit anzeigen",
+    label_show_topxy       = "Top X-Y Online-Zeit anzeigen",
+    label_show_user        = "Online-Zeit eines Users anzeigen",
+    label_show_my          = "Meine Online-Zeit anzeigen",
+    label_set_user         = "Online-Zeit eines Users setzen",
+    label_show_lowuptime   = "User mit zu geringer Online-Zeit anzeigen",
+    label_add_safe         = "User zur Safe-Liste hinzufügen",
+    label_remove_safe      = "User von Safe-Liste entfernen",
+    label_show_safe        = "User auf Safe-Liste anzeigen",
+    label_show_help        = "Hilfe anzeigen",
+
+    -- ucmd input-Felder
+    ucmd_input_nick        = "Nick",
+    ucmd_input_months      = "Monate",
+    ucmd_input_reason      = "Grund",
+    ucmd_input_time        = "Zeit",
+    ucmd_input_xy          = "x-y",
+
+    -- Hilfetext-Argument-Platzhalter
+    help_arg_xy            = "<X-Y>",
+    help_arg_nick          = "<nick>",
+    help_arg_settime       = "<nick> <zeit[m|h|d|w|M]>",
+    help_arg_setsafe       = "<nick> <monate> <grund>",
+    msg_usage_header       = "Benutzung:",
+
+    -- hubtime / settime
+    msg_syntax_hubtime     = "*** Syntax-Fehler: Eingabe !%s hubtime <nick>",
+    msg_settime_set        = "Neue Online-Zeit gesamt für %s ist %s.",
+    msg_syntax_settime     = "*** Syntax-Fehler: Eingabe !%s settime <nick> <zeit[m|h|d|w|M]>",
+
+    -- userlowuptime
+    msg_lowuptime_header   = "User mit zu geringer Online-Zeit:",
+    msg_no_lowuptime       = "Keine User mit zu geringer Online-Zeit.",
+
+    -- safe-Liste (setsafe / delsafe / showsafe)
+    msg_syntax_setsafe     = "*** Syntax-Fehler: Eingabe !%s setsafe <nick> <monate> <grund>",
+    msg_safe_max           = "Maximal 5 Safe-Monate.",
+    msg_safe_removed       = "Safe-Monat für %s wird entfernt wegen %s.",
+    msg_safe_added         = "%s hat %d Safe-Monat(e) erhalten, wegen %s.",
+    msg_safe_unsafe        = "%s wurde von der Safe-Liste entfernt.",
+    msg_safe_notonlist     = "%s ist nicht auf der Safe-Liste.",
+    msg_syntax_delsafe     = "*** Syntax-Fehler: Eingabe !%s delsafe <nick>",
+    msg_safelist_header    = "User auf der Safe-Liste:",
+    msg_no_safelist        = "Keine User auf der Safe-Liste.",
+
+    -- opchat (nur-OP-Feedback)
+    op_user_safemonth_status = "%s wird nicht geprüft wegen %s und hat noch %d Freimonat(e). (Online-Zeit: %s)",
+    op_user_deleted        = "User-Daten von %s entfernt - User wurde gelöscht.",
+    op_new_month           = "Neuer Monat gestartet, alle Online-Daten geprüft.",
+    op_user_blocked        = "%s ist gesperrt wegen zu geringer Online-Zeit.",
+
+    -- Login-Warnung an den User
+    msg_login_warning      = "*** Deine Online-Zeit gesamt ist %s. Wenn deine Online-Zeit unter %d Stunden pro Monat liegt, wird dein Account gesperrt!",
+
+    -- Block-Default-Texte (operator-überschreibbar via tSettings.sNoSearchMsg / sNoCTMMsg)
+    msg_search_blocked     = "Deine Online-Zeit ist zu gering, Search ist gesperrt",
+    msg_ctm_blocked        = "Deine Online-Zeit ist zu gering, Download ist gesperrt",
+
+    -- Freimonat-Default-Werte für Neu-Registrierungen
+    msg_freemonth_newreg   = "Neu-Reg",
+    msg_freemonth_addedby_bot = "Bot",
+
+    -- Format-Templates. Static "(e)" / "(n)" Pseudo-Plural in DE,
+    -- EN nutzt "(s)"; Aufrufstellen uebergeben nur Integer-Werte.
+    fmt_duration           = "%i Monat(e), %i Tag(e), %i Stunde(n), %i Minute(n)",
+    fmt_duration_year_prefix = "%i Jahr(e), ",
+    fmt_hoursdays          = "%i Tag(e), %i Stunde(n)",
+    fmt_months             = "%i Monat(e)",
+
+}

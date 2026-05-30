@@ -43,6 +43,37 @@
 
 --[[
 
+	etc_onlinecounter (luadch-ng fork)
+
+		v1.6:
+			- i18n: route the user-facing chat / ucmd / opchat / login-
+			  warning / formatter strings through cfg.loadlanguage. New
+			  lang files at scripts/etc_onlinecounter/lang/etc_onlinecounter.lang.{de,en}
+			  (62 keys, structure-identical EN+DE). Adds German translation.
+			- tSettings.sNoSearchMsg and tSettings.sNoCTMMsg now default
+			  from lang.msg_search_blocked / msg_ctm_blocked when the
+			  operator does not override them. Pre-existing operator
+			  overrides in tSettings continue to work unchanged.
+			- The plural() helper is REMOVED. Both EN and DE format
+			  templates now use the static "(s)" / "(e)" / "(n)" pseudo-
+			  plural form (e.g. "1 year(s)" instead of grammatically
+			  polished "1 year"). The reason: with multi-spec DE
+			  templates like "%i Monat(e), %i Tag(e), ..." the inter-
+			  leaved plural-suffix args would crash string.format on
+			  the second %i (string expected, got "s"). Acceptable
+			  EN regression for cross-locale safety and consistency
+			  with ptx_tophubbers' lang shape.
+			- The tSettings.sMenu RC-menu container labels ("About You",
+			  "Online Counter") stay as operator-config in tSettings;
+			  the labels INSIDE the menu (Show My Online Time, ...) are
+			  localised. Operators wanting a localised sMenu can override
+			  the tSettings literals directly.
+			  Part of luadch-ng/scripts #31 PR-6.
+
+]]--
+
+--[[
+
 	Online Counter 1.4 - By Jerker/Kungen
 	- With free months
 	- Keeps track of online time
@@ -80,7 +111,10 @@
 ]]--
 
 local scriptname = "etc_onlinecounter"
-local scriptversion = "1.5"
+local scriptversion = "1.6"
+
+local scriptlang = cfg.get( "language" )
+local lang, err = cfg.loadlanguage( scriptlang, scriptname ); lang = lang or {}; err = err and hub.debug( err )
 
 local tSettings = {
 	-- Bot Name
@@ -129,14 +163,16 @@ local tSettings = {
 	-- Block search
 	bSearch = true,
 	
-	-- Message when search is blocked
-	sNoSearchMsg = "Your uptime is too low, search is blocked",
+	-- Message when search is blocked. Default pulled from lang
+	-- (msg_search_blocked); set a literal here to override.
+	sNoSearchMsg = lang.msg_search_blocked or "Your uptime is too low, search is blocked",
 
 	-- Block download
 	bCTM = true,
 	
-	-- Message when download is blocked
-	sNoCTMMsg = "Your uptime is too low, download is blocked",
+	-- Message when download is blocked. Default pulled from lang
+	-- (msg_ctm_blocked); set a literal here to override.
+	sNoCTMMsg = lang.msg_ctm_blocked or "Your uptime is too low, download is blocked",
 
 	-- Profiles checked [0 = off; 1 = on]
 	tProfiles = {
@@ -191,13 +227,6 @@ local GetOnliner = function(user)
 	end
 end
 
-local plural = function(i)
-	if i == 0 or i > 1 then
-		return "s"
-	end
-	return ""
-end
-
 local MinutesToTime = function(iMinutes, bSmall)
 	-- Build table with time fields
 	local T = os.date("!*t", math.abs(tonumber(iMinutes*60)));
@@ -205,11 +234,11 @@ local MinutesToTime = function(iMinutes, bSmall)
 	if tonumber(iMinutes) < 0 then
 		sign = "-"
 	end
-	-- Format to string
-	--local sTime = string.format("%i month(s), %i day(s), %i hour(s), %i minute(s)", T.month-1, T.day-1, T.hour, T.min)
-	local sTime = string.format("%i month%s, %i day%s, %i hour%s, %i minute%s", T.month-1, plural(T.month-1), T.day-1, plural(T.day-1), T.hour, plural(T.hour), T.min, plural(T.min))
+	-- Format to string. Static "(s)" / "(e)" / "(n)" pseudo-plural
+	-- in EN / DE templates; no plural-helper arg.
+	local sTime = string.format(lang.fmt_duration or "%i month(s), %i day(s), %i hour(s), %i minute(s)", T.month-1, T.day-1, T.hour, T.min)
 	if T.year > 1970 then
-		sTime = string.format("%i year%s, ", T.year - 1970, plural(T.year - 1970))..sTime
+		sTime = string.format(lang.fmt_duration_year_prefix or "%i year(s), ", T.year - 1970)..sTime
 	end
 	-- Small stat?
 	if bSmall then
@@ -228,7 +257,7 @@ end
 local HoursToDays = function(iHours)
 	local days = math.floor(tonumber(iHours/24))
 	local hours = tonumber(iHours-(days*24))
-	return string.format("%i day%s, %i hour%s", days, plural(days), hours, plural(hours))
+	return string.format(lang.fmt_hoursdays or "%i day(s), %i hour(s)", days, hours)
 end
 
 local BuildStats = function(user, nick)
@@ -236,22 +265,22 @@ local BuildStats = function(user, nick)
 	-- In DB
 	if tNick then
 		-- Generate message
-		local sMsg = "\r\n\r\n\t"..string.rep("=", 40).."\r\n\t\t\tStats:\r\n\t"..
-		string.rep("-", 80).."\r\n\t- Nick: "..nick.."\r\n\t- Total uptime: "..
+		local sMsg = "\r\n\r\n\t"..string.rep("=", 40).."\r\n\t\t\t"..(lang.label_stats_header or "Stats:").."\r\n\t"..
+		string.rep("-", 80).."\r\n\t- "..(lang.label_stats_nick or "Nick:").." "..nick.."\r\n\t- "..(lang.label_stats_total or "Total uptime:").." "..
 		MinutesToTime(tNick.TotalTime, true).."\r\n"
-		
+
 		if user:firstnick() == nick then
-		sMsg = sMsg.."\r\n\t- If your online time is lower than "..tSettings.iTUT.." hours ("..HoursToDays(tSettings.iTUT)..") every month, your account will be blocked for download!"
+		sMsg = sMsg.."\r\n\t- "..utf.format(lang.msg_stats_block_warn or "If your online time is lower than %d hours (%s) every month, your account will be blocked for download!", tSettings.iTUT, HoursToDays(tSettings.iTUT))
 		end
-		
+
 		if tNick.FreeMonth then
-			sMsg = sMsg.."\r\n\r\n\t- Free month(s): "..tNick.FreeMonth.."\r\n\t- Free month reason: "..tNick.FreeMonthReason.."\r\n\t- Added by: "..tNick.FreeMonthAddBy..""
+			sMsg = sMsg.."\r\n\r\n\t- "..(lang.label_stats_freemonth or "Free month(s):").." "..tNick.FreeMonth.."\r\n\t- "..(lang.label_stats_reason or "Free month reason:").." "..tNick.FreeMonthReason.."\r\n\t- "..(lang.label_stats_addedby or "Added by:").." "..tNick.FreeMonthAddBy
 		end
-		
+
 		-- Send stats
 		user:reply(sMsg, tSettings.sBot, tSettings.sBot)
 	else
-		user:reply("*** Error: No record found for '"..nick.."'!", tSettings.sBot)
+		user:reply(utf.format(lang.msg_no_record or "*** Error: No record found for '%s'!", nick), tSettings.sBot)
 	end
 end
 
@@ -263,8 +292,7 @@ local toponline = function(user, data)
 		-- Set if not set
 		iStart, iEnd = (iStart or 1), (iEnd or tSettings.iMax)
 		-- Header
-		local tCopy, msg, iCount = {}, "\r\n\t"..string.rep("=", 140).."\r\n\tNr.\tTotal:\t\t\t\t\tSession:\t\t"..
-		"Entered Hub:\t\tLeft Hub:\t\t\tStatus:\tName:\r\n\t"..string.rep("-", 280).."\r\n", 0
+		local tCopy, msg, iCount = {}, "\r\n\t"..string.rep("=", 140).."\r\n\t"..(lang.msg_top_columns or "Nr.\tTotal:\t\t\t\t\tSession:\t\tEntered Hub:\t\tLeft Hub:\t\t\tStatus:\tName:").."\r\n\t"..string.rep("-", 280).."\r\n", 0
 		-- Loop through hubbers
 		for i, v in pairs(tOnlineCounter) do
 			-- Insert stats to temp table
@@ -285,20 +313,20 @@ local toponline = function(user, data)
 						break
 					end
 					-- Populate
-					local sStatus, v = "*Offline*", tCopy[i]
-					if hub.isnickonline(v.sNick) then sStatus = "*Online*" end
+					local sStatus, v = (lang.msg_offline or "*Offline*"), tCopy[i]
+					if hub.isnickonline(v.sNick) then sStatus = (lang.msg_online or "*Online*") end
 					msg = msg.."\t"..i..".\t"..MinutesToTime(v.iTotalTime).."\t"..string.format("%.1f",tonumber(v.iSessionTime)/60).." h\t\t"
 					..v.sEnter.."\t"..v.sLeave.."\t"..sStatus.."\t"..v.sNick.."\r\n"
 				end
 			end
 			msg = msg.."\t"..string.rep("-", 280)
 			-- Send
-			user:reply("Current Top Online:\r\n"..msg.."\r\n", tSettings.sBot, tSettings.sBot)
+			user:reply((lang.msg_top_header or "Current Top Online:").."\r\n"..msg.."\r\n", tSettings.sBot, tSettings.sBot)
 		else
-			user:reply("*** Error: Only "..iCount.." users in table, "..iStart.." is too high!", tSettings.sBot)
+			user:reply(utf.format(lang.msg_too_high or "*** Error: Only %d users in table, %d is too high!", iCount, iStart), tSettings.sBot)
 		end
 	else
-		user:reply("*** Error: Online Counter's table is currently empty!", tSettings.sBot)
+		user:reply(lang.msg_table_empty or "*** Error: Online Counter's table is currently empty!", tSettings.sBot)
 	end
 end
 
@@ -310,10 +338,10 @@ local tCommands = {
 		end,
 		minLevel = 10,
 		tRC = {
-			{ { "Show Top "..tSettings.iMax.." Online Time" }, { }, { "CT1" } },
+			{ { utf.format(lang.label_show_top or "Show Top %d Online Time", tSettings.iMax) }, { }, { "CT1" } },
 		},
 		help = {
-			{ "",  "Show Top "..tSettings.iMax.." Online Time" },
+			{ "",  utf.format(lang.label_show_top or "Show Top %d Online Time", tSettings.iMax) },
 		}
 	},
 	toponlinexy = {
@@ -323,10 +351,10 @@ local tCommands = {
 		end,
 		minLevel = 60,
 		tRC = {
-			{ { "Show Top X-Y Online Time" }, { "%[line:x-y]" }, { "CT1" } }
+			{ { lang.label_show_topxy or "Show Top X-Y Online Time" }, { "%[line:"..(lang.ucmd_input_xy or "x-y").."]" }, { "CT1" } }
 		},
 		help = {
-			{ "<X-Y>", "Show Top X-Y Online Time"}
+			{ lang.help_arg_xy or "<X-Y>", lang.label_show_topxy or "Show Top X-Y Online Time" }
 		}
 	},
 	hubtime = {
@@ -334,7 +362,7 @@ local tCommands = {
 			-- Parse nick
 			local _,_, sNick = data:find("^%S+%s+(%S+)$")
 			-- Exists
-			if sNick then 
+			if sNick then
 				local tUser = hub.isnickonline(sNick)
 				if tUser then
 					sNick = tUser:firstnick()
@@ -342,17 +370,17 @@ local tCommands = {
 				-- Return
 				BuildStats(user, sNick)
 			else
-				user:reply("*** Syntax Error: Type !"..tSettings.sCmd.." hubtime <nick>", tSettings.sBot)
+				user:reply(utf.format(lang.msg_syntax_hubtime or "*** Syntax Error: Type !%s hubtime <nick>", tSettings.sCmd), tSettings.sBot)
 			end
 			return PROCESSED
 		end,
 		minLevel = 60,
 		tRC = {
-			{ { "Show User Online Time" }, { "%[line:Nick]" }, { "CT1" } },
-			{ { "Show User Online Time" }, { "%[userNI]" }, { "CT2" } }
+			{ { lang.label_show_user or "Show User Online Time" }, { "%[line:"..(lang.ucmd_input_nick or "Nick").."]" }, { "CT1" } },
+			{ { lang.label_show_user or "Show User Online Time" }, { "%[userNI]" }, { "CT2" } }
 		},
 		help = {
-			{ "<nick>", "Show User Online Time" }
+			{ lang.help_arg_nick or "<nick>", lang.label_show_user or "Show User Online Time" }
 		}
 	},
 	myhubtime = {
@@ -362,11 +390,11 @@ local tCommands = {
 			return PROCESSED
 		end,
 		minLevel = 20,
-		tRC = { 
-			{ { "Show My Online Time" }, { }, { "CT1" } }
+		tRC = {
+			{ { lang.label_show_my or "Show My Online Time" }, { }, { "CT1" } }
 		},
 		help = {
-			{ "", "Show My Online Time" }
+			{ "", lang.label_show_my or "Show My Online Time" }
 		}
 	},
 	settime = {
@@ -407,31 +435,31 @@ local tCommands = {
 					local tNick = GetOnliner(sNick)
 					if tNick then
 						tNick.TotalTime = tonumber(sTime)
-						user:reply("New total time for "..sNick.." is "..MinutesToTime(tNick.TotalTime, true)..".", tSettings.sBot)
+						user:reply(utf.format(lang.msg_settime_set or "New total time for %s is %s.", sNick, MinutesToTime(tNick.TotalTime, true)), tSettings.sBot)
 					else
-						user:reply("*** Error: No record found for '"..sNick.."'!", tSettings.sBot)
+						user:reply(utf.format(lang.msg_no_record or "*** Error: No record found for '%s'!", sNick), tSettings.sBot)
 					end
 				else
-					user:reply("*** Syntax Error: Type !"..tSettings.sCmd.." settime <nick> <time[m|h|d|w|M]>", tSettings.sBot)
+					user:reply(utf.format(lang.msg_syntax_settime or "*** Syntax Error: Type !%s settime <nick> <time[m|h|d|w|M]>", tSettings.sCmd), tSettings.sBot)
 				end
 			else
-				user:reply("*** Syntax Error: Type !"..tSettings.sCmd.." settime <nick> <time[m|h|d|w|M]>", tSettings.sBot)
+				user:reply(utf.format(lang.msg_syntax_settime or "*** Syntax Error: Type !%s settime <nick> <time[m|h|d|w|M]>", tSettings.sCmd), tSettings.sBot)
 			end
 			return PROCESSED
 		end,
 		minLevel = 60,
 		tRC = {
-			{ { "Set User Online Time" }, { "%[line:Nick]", "%[line:Time]" }, { "CT1" } },
-			{ { "Set User Online Time" }, { "%[userNI]", "%[line:Time]" }, { "CT2" } }
+			{ { lang.label_set_user or "Set User Online Time" }, { "%[line:"..(lang.ucmd_input_nick or "Nick").."]", "%[line:"..(lang.ucmd_input_time or "Time").."]" }, { "CT1" } },
+			{ { lang.label_set_user or "Set User Online Time" }, { "%[userNI]", "%[line:"..(lang.ucmd_input_time or "Time").."]" }, { "CT2" } }
 		},
 		help = {
-			{ "<nick> <time[m|h|d|w|M]>", "Set User Online Time" }
+			{ lang.help_arg_settime or "<nick> <time[m|h|d|w|M]>", lang.label_set_user or "Set User Online Time" }
 		}
 	},
 	userlowuptime = {
 		fFunction = function(user, data)
 			local iCount = 0
-			local msg = "Users with too low online time:\r\n"
+			local msg = (lang.msg_lowuptime_header or "Users with too low online time:").."\r\n"
 			if next(tOnlineCounter) then
 				local _,regnicks = hub.getregusers( )
 				for i, v in pairs(tOnlineCounter) do
@@ -451,49 +479,49 @@ local tCommands = {
 			if iCount > 0 then
 				user:reply(msg, tSettings.sBot, tSettings.sBot)
 			else
-				user:reply("No users with too low online time.", tSettings.sBot, tSettings.sBot)
+				user:reply(lang.msg_no_lowuptime or "No users with too low online time.", tSettings.sBot, tSettings.sBot)
 			end
             return PROCESSED
 		end,
 		minLevel = 60,
 		tRC = {
-			{ { "Show Users With Too Low Online Time" }, { }, { "CT1" } }
+			{ { lang.label_show_lowuptime or "Show Users With Too Low Online Time" }, { }, { "CT1" } }
 		},
 		help = {
-			{ "", "Show Users With Too Low Online Time" }
+			{ "", lang.label_show_lowuptime or "Show Users With Too Low Online Time" }
 		}
 	},
 	setsafe = {
 		fFunction = function(user, data)
 			local _,_, sNick, iMonth, sReason = data:find("^%S+%s+(%S+)%s+(%S+)%s+(.+)")
 			if not sNick or not tonumber(iMonth) or not sReason then
-				user:reply("*** Syntax Error: Type !"..tSettings.sCmd.." setsafe <nick> <months> <reason>", tSettings.sBot)
+				user:reply(utf.format(lang.msg_syntax_setsafe or "*** Syntax Error: Type !%s setsafe <nick> <months> <reason>", tSettings.sCmd), tSettings.sBot)
 				return PROCESSED
 			end
-			
+
 			iMonth = tonumber(iMonth)
 			if iMonth > 5 then
-				user:reply("Max 5 safe month.", tSettings.sBot)
+				user:reply(lang.msg_safe_max or "Max 5 safe month.", tSettings.sBot)
 				return PROCESSED
 			end
-			
+
 			local tUser = hub.isnickonline(sNick)
 			if tUser then
 				sNick = tUser:firstnick()
 			end
 			local tNick = GetOnliner(sNick)
-			
+
 			if not tNick then
-				user:reply("*** Error: No record found for '"..sNick.."'!", tSettings.sBot)
+				user:reply(utf.format(lang.msg_no_record or "*** Error: No record found for '%s'!", sNick), tSettings.sBot)
 				return PROCESSED
 			end
-			
+
 			if iMonth <= 0 then
 				tNick.FreeMonth = nil
 				tNick.FreeMonthReason = nil
 				tNick.FreeMonthAddBy = nil
-				
-				local msg = sNick.." no clean month is now remove because of "..sReason.."."
+
+				local msg = utf.format(lang.msg_safe_removed or "%s no clean month is now remove because of %s.", sNick, sReason)
 				OnError(msg.." //"..user:nick())
 				user:reply(msg, tSettings.sBot)
 			else
@@ -503,7 +531,7 @@ local tCommands = {
 				if tNick.TotalTime < 0 then
 					tNick.TotalTime = 0
 				end
-				local msg = sNick.." have get "..iMonth.." no clean month, because of "..sReason.."."
+				local msg = utf.format(lang.msg_safe_added or "%s have get %d no clean month, because of %s.", sNick, iMonth, sReason)
 				OnError(msg.." //"..user:nick())
 				user:reply(msg, tSettings.sBot)
 			end
@@ -511,11 +539,11 @@ local tCommands = {
 		end,
 		minLevel = 60,
 		tRC = {
-			{ { "Add User To Safe List" }, { "%[line:Nick]", "%[line:Months]", "%[line:Reason]" }, { "CT1" } },
-			{ { "Add User To Safe List" }, { "%[userNI]", "%[line:Months]", "%[line:Reason]" }, { "CT2" } }
+			{ { lang.label_add_safe or "Add User To Safe List" }, { "%[line:"..(lang.ucmd_input_nick or "Nick").."]", "%[line:"..(lang.ucmd_input_months or "Months").."]", "%[line:"..(lang.ucmd_input_reason or "Reason").."]" }, { "CT1" } },
+			{ { lang.label_add_safe or "Add User To Safe List" }, { "%[userNI]", "%[line:"..(lang.ucmd_input_months or "Months").."]", "%[line:"..(lang.ucmd_input_reason or "Reason").."]" }, { "CT2" } }
 		},
 		help = {
-			{ "<nick> <months> <reason>", "Add User To Safe List" }
+			{ lang.help_arg_setsafe or "<nick> <months> <reason>", lang.label_add_safe or "Add User To Safe List" }
 		}
 	},
 	delsafe = {
@@ -532,32 +560,32 @@ local tCommands = {
 						tNick.FreeMonth = nil
 						tNick.FreeMonthReason = nil
 						tNick.FreeMonthAddBy = nil
-						user:reply(sNick.." is removed safe list.", tSettings.sBot)
+						user:reply(utf.format(lang.msg_safe_unsafe or "%s is removed safe list.", sNick), tSettings.sBot)
 					else
-						user:reply(sNick.." is not on safe list.", tSettings.sBot)
+						user:reply(utf.format(lang.msg_safe_notonlist or "%s is not on safe list.", sNick), tSettings.sBot)
 					end
 				else
-					user:reply("*** Error: No record found for '"..sNick.."'!", tSettings.sBot)
+					user:reply(utf.format(lang.msg_no_record or "*** Error: No record found for '%s'!", sNick), tSettings.sBot)
 				end
 			else
-				user:reply("*** Syntax Error: Type !"..tSettings.sCmd.." delsafe <nick>", tSettings.sBot)
+				user:reply(utf.format(lang.msg_syntax_delsafe or "*** Syntax Error: Type !%s delsafe <nick>", tSettings.sCmd), tSettings.sBot)
 			end
 			return PROCESSED
 		end,
 		minLevel = 60,
 		tRC = {
-			{ { "Remove User From Safe List" }, { "%[line:Nick]" }, { "CT1" } },
-			{ { "Remove User From Safe List" }, { "%[userNI]" }, { "CT2" } }
+			{ { lang.label_remove_safe or "Remove User From Safe List" }, { "%[line:"..(lang.ucmd_input_nick or "Nick").."]" }, { "CT1" } },
+			{ { lang.label_remove_safe or "Remove User From Safe List" }, { "%[userNI]" }, { "CT2" } }
 		},
 		help = {
-			{ "<nick>", "Remove User From Safe List" }
+			{ lang.help_arg_nick or "<nick>", lang.label_remove_safe or "Remove User From Safe List" }
 		}
 	},
 	showsafe = {
 		fFunction = function(user)
 			local iCount = 0
 			local iMaxLen = 0
-			local msg = "\r\nUsers on safe list:\r\n"
+			local msg = "\r\n"..(lang.msg_safelist_header or "Users on safe list:").."\r\n"
 			if next(tOnlineCounter) then
 				local _,regnicks = hub.getregusers( )
 				for i, v in pairs(tOnlineCounter) do
@@ -566,7 +594,7 @@ local tCommands = {
 						iMaxLen = math.max(iMaxLen, string.len(i))
 					end
 				end
-				
+
 				local fmt = string.format("%%-%ii%%-%is%%-10s%%s", string.len(tostring(iCount)) + 2, iMaxLen + 4)
 				iCount = 0
 				for i, v in pairs(tOnlineCounter) do
@@ -575,7 +603,7 @@ local tCommands = {
 						local tUser = regnicks[ i ]
 						if tUser then
 							iCount = iCount + 1
-							msg = msg..string.format(fmt, iCount, i, string.format("%i Month%s", v.FreeMonth, plural(v.FreeMonth)), v.FreeMonthReason).."\r\n"
+							msg = msg..string.format(fmt, iCount, i, string.format(lang.fmt_months or "%i Month(s)", v.FreeMonth), v.FreeMonthReason).."\r\n"
 						end
 					end
 				end
@@ -583,16 +611,16 @@ local tCommands = {
 			if iCount > 0 then
 				user:reply(msg, tSettings.sBot, tSettings.sBot)
 			else
-				user:reply("No users on safe list.", tSettings.sBot, tSettings.sBot)
+				user:reply(lang.msg_no_safelist or "No users on safe list.", tSettings.sBot, tSettings.sBot)
 			end
             return PROCESSED
 		end,
 		minLevel = 60,
 		tRC = {
-			{ { "Show Users On Safe List" }, { }, { "CT1" } }
+			{ { lang.label_show_safe or "Show Users On Safe List" }, { }, { "CT1" } }
 		},
 		help = {
-			{ "", "Show Users On Safe List" }
+			{ "", lang.label_show_safe or "Show Users On Safe List" }
 		}
 	},
 	showhelp = {
@@ -602,10 +630,10 @@ local tCommands = {
 		end,
 		minLevel = 20,
 		tRC = {
-			{ { "Show Help" }, { }, { "CT1" } }
+			{ { lang.label_show_help or "Show Help" }, { }, { "CT1" } }
 		},
 		help = {
-			{ "", "Show Help" }
+			{ "", lang.label_show_help or "Show Help" }
 		}
 	},
 }
@@ -624,7 +652,7 @@ ShowHelp = function(user)
 		end
 	end
 	if sMsg ~= "" then
-		user:reply("\r\n\r\n\tUsage:"..sMsg, tSettings.sBot, tSettings.sBot)
+		user:reply("\r\n\r\n\t"..(lang.msg_usage_header or "Usage:")..sMsg, tSettings.sBot, tSettings.sBot)
 	end
 end
 
@@ -642,7 +670,7 @@ local onbmsg = function(user, cmd, parameters, msg)
 		if user:level() >= tCommands[subCmd].minLevel then
 			return tCommands[subCmd].fFunction(user, parameters), 1
 		else
-			user:reply("*** Error: You are not allowed to use this command!", tSettings.sBot, tmp)
+			user:reply(lang.msg_no_perm or "*** Error: You are not allowed to use this command!", tSettings.sBot, tmp)
 			return PROCESSED
 		end
 	end
@@ -698,8 +726,8 @@ hub.setlistener( "onStart", { },
 							TotalTime = 0,
 							Leave = os.date("%Y-%m-%d %H:%M:%S"),
 							FreeMonth = 1,
-							FreeMonthReason = "New reg",
-							FreeMonthAddBy = "Bot"
+							FreeMonthReason = lang.msg_freemonth_newreg or "New reg",
+							FreeMonthAddBy = lang.msg_freemonth_addedby_bot or "Bot"
 						}
 					end
 				end
@@ -747,7 +775,7 @@ hub.setlistener( "onTimer", { },
 							-- flow: the operator grants the user a safe month, the next
 							-- rollover wipes their earned online time. Safe-month
 							-- semantics are now "no iTUT*60 deduction" only.
-							OnError(i.." is not checked because "..v.FreeMonthReason.." and have "..v.FreeMonth.." no free month back. (Online time: "..MinutesToTime(v.TotalTime,true)..")")
+							OnError(utf.format(lang.op_user_safemonth_status or "%s is not checked because %s and have %d no free month back. (Online time: %s)", i, v.FreeMonthReason, v.FreeMonth, MinutesToTime(v.TotalTime, true)))
 
 						end
 						if v.FreeMonth ~= nil and v.FreeMonth <= 0 then
@@ -759,11 +787,11 @@ hub.setlistener( "onTimer", { },
 					else
 						--Show/delete user data if not reg
 						tOnlineCounter[i] = nil
-						OnError(i.." user data is remove because the user is deleted.")
+						OnError(utf.format(lang.op_user_deleted or "%s user data is remove because the user is deleted.", i))
 					end
 				end
 				--send msg to Crews
-				OnError("New Month started, all online data is checked.")
+				OnError(lang.op_new_month or "New Month started, all online data is checked.")
 				if reloadUserList then
 					hub.reloadusers()
 				end
@@ -841,14 +869,13 @@ hub.setlistener( "onLogin", { },
 						-- Less than zero equals blocked
 						if tNick.TotalTime < 0 then
 							if tSettings.bOpWarning then
-								OnError(user:nick().." is blocked because of too low uptime.")
+								OnError(utf.format(lang.op_user_blocked or "%s is blocked because of too low uptime.", user:nick()))
 							end
 							
 						-- Less than allowed
 						elseif tNick.TotalTime < tSettings.iTUT*60 and tonumber(os.date("%d")) > 20 and tSettings.bWarning and not FreeMonth then
 							-- Warn
-							user:reply("*** Your Total Online Time Is "..MinutesToTime(tNick.TotalTime,true)..
-							". If your Online Time is lower than "..tSettings.iTUT.." hours every month, your account will be blocked!", tSettings.sBot, tSettings.sBot)
+							user:reply(utf.format(lang.msg_login_warning or "*** Your Total Online Time Is %s. If your Online Time is lower than %d hours every month, your account will be blocked!", MinutesToTime(tNick.TotalTime, true), tSettings.iTUT), tSettings.sBot, tSettings.sBot)
 						end
 					end
 				end
@@ -868,8 +895,8 @@ hub.setlistener( "onLogin", { },
 					TotalTime = 0,
 					Leave = os.date("%Y-%m-%d %H:%M:%S"),
 					FreeMonth = 1,
-					FreeMonthReason = "New reg",
-					FreeMonthAddBy = "Bot"
+					FreeMonthReason = lang.msg_freemonth_newreg or "New reg",
+					FreeMonthAddBy = lang.msg_freemonth_addedby_bot or "Bot"
 				}
 			end
 		end
