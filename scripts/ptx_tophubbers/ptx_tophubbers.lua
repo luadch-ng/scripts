@@ -14,6 +14,26 @@
 
 --[[
 
+    ptx_tophubbers (luadch-ng fork)
+
+        v0.2:
+            - i18n: route the user-facing chat / ucmd / stats strings
+              through lang (msg_*, ucmd_*, fmt_duration). The rank names
+              in tSettings.tRanks stay as operator config (whitespace-
+              calibrated column padding); the on-screen rank legend in
+              the !tophubbers output is also left as hardcoded German
+              for the same column-layout reason. Both contain the
+              upstream typo "Mittelgosser" (read: Mittelgrosser); the
+              fix would shift column widths so it is deferred.
+            - Bundled typo fix: the ucmd label "Zeige die Statisk eines
+              Users" is corrected to "Zeige die Statistik eines Users"
+              in lang.de (the label has no column-layout coupling).
+              Part of luadch-ng/scripts #31 PR-4.
+
+]]--
+
+--[[
+
     luadch svn 230 port by blastbeat
         - fixed year bug in MinutesToTime
 
@@ -59,6 +79,45 @@
 -- removed on import: setmetatable( getfenv( 1 ), nil ) -- getfenv() gone in
 -- Lua 5.4; intent (clear metatable on script env) is moot in our empty-_ENV
 -- sandbox.
+
+local scriptname = "ptx_tophubbers"
+local scriptversion = "0.2"
+
+local scriptlang = cfg.get( "language" )
+local lang, err = cfg.loadlanguage( scriptlang, scriptname ); lang = lang or {}; err = err and hub.debug( err )
+
+local msg_no_perm        = lang.msg_no_perm        or "*** Fehler: Dir ist es nicht erlaubt diesen Befehl zu nutzen"
+local msg_aut_warning    = lang.msg_aut_warning    or "*** Deine Durchschnitts-Online Zeit (DOT) ist kleiner als %d Stunde(n). Wir planen Einschränkungen einzuführen für User die die vorgeschriebene DOT nicht erreichen!"
+local msg_top_empty      = lang.msg_top_empty      or "*** Fehler: Top Hubbers Tabelle ist zurzeit leer!"
+local msg_hubtime_usage  = lang.msg_hubtime_usage  or "*** Eingabe Fehler: Versuch es wie folgt: !hubtime <nick>"
+local msg_no_entry       = lang.msg_no_entry       or "*** Fehler: Keinen Eintrag gefunden für '%s'!"
+
+local msg_top_header     = lang.msg_top_header     or "● Aktuelle Tophubbers  ●"
+local msg_top_col_nr     = lang.msg_top_col_nr     or "Nr."
+local msg_top_col_time   = lang.msg_top_col_time   or "Online Zeit:"
+local msg_top_col_rank   = lang.msg_top_col_rank   or "Rang:"
+local msg_top_col_status = lang.msg_top_col_status or "Status:"
+local msg_top_col_nick   = lang.msg_top_col_nick   or "Nick:"
+local msg_top_online     = lang.msg_top_online     or "*Online*"
+local msg_top_offline    = lang.msg_top_offline    or "*Offline*"
+
+local msg_stats_header   = lang.msg_stats_header   or "● Statistik von %s ●"
+local msg_stats_nick     = lang.msg_stats_nick     or "Nick:"
+local msg_stats_time     = lang.msg_stats_time     or "Onlinezeit:"
+local msg_stats_avg      = lang.msg_stats_avg      or "Ø pro Tag:"
+local msg_stats_rank     = lang.msg_stats_rank     or "Rang:"
+
+local fmt_duration       = lang.fmt_duration       or "%i Jahr(e), %i Monat(e), %i Tag(e), %i Stunde(n), %i Minute(n)"
+
+local ucmd_menu          = lang.ucmd_menu          or "Allgemein"
+local ucmd_submenu       = lang.ucmd_submenu       or "Tophubbers"
+local ucmd_show_top      = lang.ucmd_show_top      or "Zeige Top %d hubbers"
+local ucmd_show_topxy    = lang.ucmd_show_topxy    or "Zeige Top x-y Hubbers"
+local ucmd_input_topxy   = lang.ucmd_input_topxy   or "Zeige Rang x-y"
+local ucmd_show_mytime   = lang.ucmd_show_mytime   or "Zeige deine Onlinezeit"
+local ucmd_show_stats    = lang.ucmd_show_stats    or "Zeige die Statistik eines Users"
+local ucmd_input_nick    = lang.ucmd_input_nick    or "Nick"
+local ucmd_show_mystats  = lang.ucmd_show_mystats  or "Zeige meine Statistik"
 
 tSettings = {
     -- Bot Name
@@ -135,8 +194,8 @@ hub.setlistener( "onStart", { },
         string.gmatch = (string.gmatch or string.gfind)
         local ucmd = hub.import "etc_usercommands.lua"
         if ucmd then
-            ucmd.add( { "Allgemein", "Tophubbers", "Zeige Top "..tSettings.iMax.." hubbers" }, "tophubbers", { }, { "CT1" }, 10 )
-            ucmd.add( { "Allgemein", "Tophubbers", "Zeige deine Onlinezeit" }, "myhubtime", { }, { "CT1" }, 10 )
+            ucmd.add( { ucmd_menu, ucmd_submenu, utf.format( ucmd_show_top, tSettings.iMax ) }, "tophubbers", { }, { "CT1" }, 10 )
+            ucmd.add( { ucmd_menu, ucmd_submenu, ucmd_show_mytime }, "myhubtime", { }, { "CT1" }, 10 )
         end
     end
 )
@@ -185,8 +244,7 @@ hub.setlistener( "onConnect", { },
                         -- Warn
                         --user:SendPM(tSettings.sBot, "*** Deine Durchschnitts-Online Zeit (DOT) ist kleiner als "..tSettings.iAUT..
                         --" Stunde(n). Wir planen Einschränkungen einzuführen für User die die vorgeschriebene DOT nicht erreichen!")
-                        user:reply("*** Deine Durchschnitts-Online Zeit (DOT) ist kleiner als "..tSettings.iAUT..
-                        " Stunde(n). Wir planen Einschränkungen einzuführen für User die die vorgeschriebene DOT nicht erreichen!", tSettings.sBot) ----!
+                        user:reply(utf.format( msg_aut_warning, tSettings.iAUT ), tSettings.sBot) ----!
                     end
                 end
                 -- Reset and save time
@@ -240,7 +298,7 @@ onbmsg = function(user, _, msg)
         if tCommands[cmd].tLevels[user:level()] then
             return tCommands[cmd].fFunction(user, msg), 1
         else
-            return user:reply("*** Fehler: Dir ist es nicht erlaubt diesen Befehl zu nutzen", tSettings.sBot, tmp), 1
+            return user:reply(msg_no_perm, tSettings.sBot, tmp), 1
         end
     end
 end
@@ -258,8 +316,8 @@ tCommands = {
                 -- Set if not set
                 iStart, iEnd = (iStart or 1), (iEnd or tSettings.iMax)
                 -- Header
-                local tCopy, msg = {}, "\r\n\t"..string.rep("_", 130).."\r\n\tNr.  Online Zeit:\t\t\t\t\t\t"..
-                "\tRang:\t\t\t\tStatus:\t\tNick:\r\n\t"..string.rep("¯", 130).."\r\n"
+                local tCopy, msg = {}, "\r\n\t"..string.rep("_", 130).."\r\n\t"..msg_top_col_nr.."  "..msg_top_col_time.."\t\t\t\t\t\t"..
+                "\t"..msg_top_col_rank.."\t\t\t\t"..msg_top_col_status.."\t\t"..msg_top_col_nick.."\r\n\t"..string.rep("¯", 130).."\r\n"
                 -- Loop through hubbers
                 for i, v in pairs(tOnline) do
                     -- Insert stats to temp table
@@ -273,8 +331,8 @@ tCommands = {
                     -- i exists
                     if tCopy[i] then
                         -- Populate
-                        local sStatus, v = "*Offline*", tCopy[i]; local sRank = v.sRank
-                        if hub.isnickonline(v.sNick) then sStatus = "*Online*" end
+                        local sStatus, v = msg_top_offline, tCopy[i]; local sRank = v.sRank
+                        if hub.isnickonline(v.sNick) then sStatus = msg_top_online end
                         if string.len(v.sRank) < 9 then sRank = sRank.."\t" end
                         msg = msg.."\t"..i..".    "..MinutesToTime(v.iTotalTime).."\t\t"..sRank.."\t\t"..sStatus.."\t\t"..v.sNick.."\r\n"
                     end
@@ -300,19 +358,20 @@ tCommands = {
                 local logo = [[
 
 
-                                                                                                                                  ● Aktuelle Tophubbers  ●
+                                                                                                                                  ]]..msg_top_header..[[
+
   ]]
 
                 user:reply("\r\n"..logo..msg.."\r\n", tSettings.sBot, tSettings.sBot)
             else
-                user:reply("*** Fehler: Top Hubbers Tabelle ist zurzeit leer!", tSettings.sBot)
+                user:reply(msg_top_empty, tSettings.sBot)
             end
             return PROCESSED
         end,
         tLevels = {
             [0] = 0, [10] = 1, [20] = 1, [30] = 1, [40] = 1, [50] = 1, [60] = 1, [70] = 1, [80] = 0, [90] = 1, [100] = 1,
         },
-        tRC = { { "Zeige Top "..tSettings.iMax.." hubbers", "" }, { "Zeige Top x-y Hubbers", " %[line:Zeige Rang x-y]" } }
+        tRC = { { utf.format( ucmd_show_top, tSettings.iMax ), "" }, { ucmd_show_topxy, " %[line:"..ucmd_input_topxy.."]" } }
     },
     hubtime = {
         fFunction = function(user, data)
@@ -323,14 +382,14 @@ tCommands = {
                 -- Return
                 BuildStats(user, nick)
             else
-                user:reply("*** Eingabe Fehler: Versuch es wie folgt: !hubtime <nick>", tSettings.sBot)
+                user:reply(msg_hubtime_usage, tSettings.sBot)
             end
             return PROCESSED
         end,
         tLevels = { 
             [0] = 0, [10] = 1, [20] = 1, [30] = 1, [40] = 1, [50] = 1, [60] = 1, [70] = 1, [80] = 0, [90] = 1, [100] = 1,
         },
-        tRC = { { "Zeige die Statisk eines Users", " %[line:Nick]" } }
+        tRC = { { ucmd_show_stats, " %[line:"..ucmd_input_nick.."]" } }
     },
     myhubtime = {
         fFunction = function(user)
@@ -341,7 +400,7 @@ tCommands = {
         tLevels = { 
             [0] = 0, [10] = 1, [20] = 1, [30] = 1, [40] = 1, [50] = 1, [60] = 1, [70] = 1, [80] = 0, [90] = 1, [100] = 1,
         },
-        tRC = { { "Zeige meine Statistik", "" } }
+        tRC = { { ucmd_show_mystats, "" } }
     },
 }
 
@@ -363,17 +422,17 @@ BuildStats = function(user, nick)
 
 		
   ]]
-        local sMsg = "\r\n"..logo2.."\r\n\t\t\t● Statistik von "..nick.." ●\r\n\r\n\t"..        
+        local sMsg = "\r\n"..logo2.."\r\n\t\t\t"..utf.format( msg_stats_header, nick ).."\r\n\r\n\t"..
         "____________________________________________________________________ \r\n\r\n\t"..
-        "Nick:\t\t "..nick.." \r\n\t"..
-        "Onlinezeit:\t "..MinutesToTime(tNick.TotalTime, true).." \r\n\t"..
-        "Ø pro Tag:\t "..MinutesToTime((tNick.TotalTime/iAverage), true).." \r\n\t"..    
-        "Rang:\t\t "..GetRank(nick).." \r\n\r\n\t"..        
+        msg_stats_nick.."\t\t "..nick.." \r\n\t"..
+        msg_stats_time.."\t "..MinutesToTime(tNick.TotalTime, true).." \r\n\t"..
+        msg_stats_avg.."\t "..MinutesToTime((tNick.TotalTime/iAverage), true).." \r\n\t"..
+        msg_stats_rank.."\t\t "..GetRank(nick).." \r\n\r\n\t"..
         "¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯ \r\n"
 
         user:reply(sMsg, tSettings.sBot, tSettings.sBot)
     else
-        user:reply("*** Fehler: Keinen Eintrag gefunden für '"..nick.."'!", tSettings.sBot)
+        user:reply(utf.format( msg_no_entry, nick ), tSettings.sBot)
     end
 end
 
@@ -412,7 +471,7 @@ MinutesToTime = function(iSeconds, bSmall)
     -- Build table with time fields
     local T = os.date("!*t", tonumber(iSeconds*60)); 
     -- Format to string
-    local sTime = string.format("%i Jahr(e), %i Monat(e), %i Tag(e), %i Stunde(n), %i Minute(n)", (T.year-1970), T.month-1, T.day-1, T.hour, T.min)
+    local sTime = string.format(fmt_duration, (T.year-1970), T.month-1, T.day-1, T.hour, T.min)
     -- Small stat?
     if bSmall then
         -- For each digit
@@ -454,3 +513,7 @@ Serialize = function(tTable, sTableName, hFile, sTab)
     end
     hFile:write(sTab.."}");
 end
+
+hub.debug( "** Loaded "..scriptname.." "..scriptversion.." **" )
+
+--[END]
