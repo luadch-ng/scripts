@@ -82,8 +82,8 @@ local addinfomsg = lang.addinfomsg or  "%s was added to blackboard, reason: %s"
 local showusersmsg = lang.showusersmsg or "\nAll Users in blackboard: "
 local showinfomsg = lang.showinfomsg or "\n All infos of User %s: "
 local noinfos = lang.noinfos or "No infos available"
-local nonenty = lang.noentry or "No entry with this ID"
-local deleteinfomsg = lang.deleteinfomsg or  "Info: %s of User: %s was deletet from blackboard"
+local noentry = lang.noentry or "No entry with this ID"
+local deleteinfomsg = lang.deleteinfomsg or  "Info: %s of User: %s was deleted from blackboard"
 
 -- ucmd menu --
 local ucmd_menu_addinfo = lang.ucmd_menu_addinfo or { "Hub", "Blackboard", "add info" }

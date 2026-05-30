@@ -9,8 +9,8 @@
     msg_time = "Der Banner wird alle %s Stunden gesendet.",
 
     ucmd_menu_show = { "Hub", "etc", "Banner", "Zeige Banner" },
-    ucmd_menu_set_msg = { "Hub", "etc", "Banner", "Setzte Banner Nachricht" },
-    ucmd_menu_set_time = { "Hub", "etc", "Banner", "Setzte Intervall" },
+    ucmd_menu_set_msg = { "Hub", "etc", "Banner", "Setze Banner Nachricht" },
+    ucmd_menu_set_time = { "Hub", "etc", "Banner", "Setze Intervall" },
 
     ucmd_popup1 = "Gib den neuen Bannertext ein.",
     ucmd_popup2 = "Gib das neue Zeitintervall ein (in Stunden).",
