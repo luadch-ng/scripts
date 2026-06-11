@@ -81,6 +81,16 @@
         [+!#]reloff
         [+!#]relon
 
+    v0.13: by Aybo
+      - fixed: `io.flush()` call in OpenRel crashed onStart on
+        luadch master (luadch-ng/scripts#42). io.flush acts on the
+        hub's process stdout and is correctly excluded from the
+        _io_safe shim (luadch-ng/luadch#206). The call was residual
+        cruft - no preceding io.write to flush. Cascaded into an
+        onLogin "compare with nil" at L815 because OpenRel never
+        reached the FreshStuff.Count initialisation. Both crashes
+        resolved by dropping the io.flush() call.
+
     v0.12: by Aybo
       - removed: dead `local x = os.clock()` in PruneRel that started
         a stopwatch never read (luadch-ng/scripts#40). The 6 other
@@ -216,7 +226,7 @@ local optout_file = "ptx_freshstuff_optoutusers.dat"
 --------------
 
 local scriptname = "ptx_freshstuff"
-local scriptversion = "0.12"
+local scriptversion = "0.13"
 
 local userlevels = {
 
@@ -981,7 +991,14 @@ end
 
 function FreshStuff.OpenRel()
   FreshStuff.AllStuff, FreshStuff.NewestStuff = nil, nil
-  collectgarbage(); io.flush()
+  -- io.flush() removed (luadch-ng/scripts#42): acted on the hub's
+  -- process stdout; the curated _io_safe shim from
+  -- luadch-ng/luadch#206 correctly excludes io.flush alongside
+  -- io.input / output / read / write. Pre-fix this crashed onStart
+  -- with "attempt to call a nil value (field 'flush')", which then
+  -- left FreshStuff.Count uninitialised and cascaded into the
+  -- onLogin compare-with-nil at L815.
+  collectgarbage()
   FreshStuff.AllStuff,FreshStuff.NewestStuff,FreshStuff.TopAdders = {}, {}, {}
   FreshStuff.Count,FreshStuff.Count2 = 0, 0
   local f = io.open( fs_path .. rel_file, "r" )
