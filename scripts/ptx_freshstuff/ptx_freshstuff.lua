@@ -81,6 +81,12 @@
         [+!#]reloff
         [+!#]relon
 
+    v0.12: by Aybo
+      - removed: dead `local x = os.clock()` in PruneRel that started
+        a stopwatch never read (luadch-ng/scripts#40). The 6 other
+        os.clock sites are paired with a display in SendTxt; PruneRel
+        had no such display. No behaviour change.
+
     v0.11: by Sopor
       - added: announce releases in main or pm
       - added: timed cleaner with on/off option (when day changes) thanks Cêñoßy†ê
@@ -210,7 +216,7 @@ local optout_file = "ptx_freshstuff_optoutusers.dat"
 --------------
 
 local scriptname = "ptx_freshstuff"
-local scriptversion = "0.11"
+local scriptversion = "0.12"
 
 local userlevels = {
 
@@ -1275,7 +1281,6 @@ function FreshStuff.PruneRel( user, data, env )
   local _, _, days = string_find( data, "%S+%s+(%d+)" )
   days = days or FreshStuff.MaxItemAge
   local cnt = 0
-  local x = os.clock()
   local now = JulianDate( SplitTimeString( os.date( "%Y-%m-%d" .. " 00:00:00" ) ) )
   local oldest = days * 1440
   for i = FreshStuff.Count, 1, -1 do
