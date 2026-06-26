@@ -201,6 +201,8 @@ would require a complete rewrite (not just a Lua-5.4 syntax migration).
 
 **Notes:** Safe import.
 
+**Status:** Promoted to `luadch-ng/luadch` core (luadch-ng/luadch#81, shipped via the 9-PR arc culminating in luadch-ng/luadch#351). Plugin removed from this repo; operators get the blocker out of the box plus ADC `+blocker` CRUD, HTTP `/v1/clientblocker`, audit fires, and 40 bundled patterns.
+
 ---
 
 ### etc_hide_announcer — v0.01
