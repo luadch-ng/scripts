@@ -287,7 +287,7 @@ if not prefix_activate then
             end
             local hubcmd = hub_import( "etc_hubcommands" )
             assert( hubcmd )
-            assert( hubcmd.add( cmd, onbmsg ) )
+            assert( hubcmd.add( cmd, onbmsg, oplevel ) )
             return nil
         end
     )
