@@ -700,7 +700,7 @@ hub.setlistener( "onStart", { },
 		end
 		local hubcmd = hub.import( "etc_hubcommands" )    -- add hubcommand
 		assert( hubcmd )
-		assert( hubcmd.add( tSettings.sCmd, onbmsg ) )
+		assert( hubcmd.add( tSettings.sCmd, onbmsg, tCommands.toponline.minLevel ) )
 
 		--Set month //Zido
 		Month = os.date("%m")

@@ -1494,7 +1494,7 @@ hub.setlistener( "onStart", { },
 		end
 		hubcmd = hub_import( "etc_hubcommands" )    -- add hubcommand
 		assert( hubcmd )
-		assert( hubcmd.add( cmd, oncmdRSS ) )
+		assert( hubcmd.add( cmd, oncmdRSS, minlevel ) )
 
 		if tSettings.GetFeedAtStart and #Feeds > 0 then
 			if tSettings.allFeedsAtOnce then

@@ -1083,7 +1083,7 @@ hub.setlistener( "onStart", {},
         -- import hubcmd for "onbmsg" function
         hubcmd = hub.import( "etc_hubcommands" )
         assert( hubcmd )
-        assert( hubcmd.add( cmd, onbmsg ) )
+        assert( hubcmd.add( cmd, onbmsg, minlvl ) )
         return nil
     end
 )

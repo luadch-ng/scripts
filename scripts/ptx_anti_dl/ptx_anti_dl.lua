@@ -324,7 +324,7 @@ hub.setlistener( "onStart", { },
 		end
 		hubcmd = hub.import "etc_hubcommands"
 		assert( hubcmd )
-		assert( hubcmd.add( cmd, onbmsg ) )
+		assert( hubcmd.add( cmd, onbmsg, oplevel ) )
 		hub.debug("Anti-DL v2.0 loaded!")
 		return nil
 	end
