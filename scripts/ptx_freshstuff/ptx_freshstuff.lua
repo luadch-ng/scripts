@@ -58,6 +58,21 @@
     through util.atomic_write instead of direct io.open(path, "w+").
     Min hub version: v3.1.7 - util.atomic_write was introduced in
     luadch-ng/luadch#134.
+
+    Releases-file robustness v0.13 -> v0.14 (Sopor 2026-07-14):
+    FreshStuff.OpenRel read the releases store (ptx_freshstuff_releases.dat,
+    a line-based "cat$who$when$title" text file - io.open + f:lines, NOT
+    util.loadtable) and error( msg_error_02 )'d on the FIRST line that did
+    not match. A single malformed line therefore aborted onStart and the
+    WHOLE plugin failed to load ("The releases file is corrupt or
+    missing."). Reported by Sopor: a hubowner who received a zipped,
+    populated install hit it because the .dat was mangled in the
+    transfer/unpack (a blank, truncated, or altered line). OpenRel now
+    SKIPS a malformed line (empty lines silently; a non-empty bad line is
+    logged via hub_debug) and keeps the good releases, so one bad line no
+    longer bricks the bot. A missing file was already a no-op. Operator
+    recovery unchanged: deleting the releases .dat starts it clean (it is
+    recreated on the next add); only categories.dat must exist.
 ]]--
 
 --[[
@@ -226,7 +241,7 @@ local optout_file = "ptx_freshstuff_optoutusers.dat"
 --------------
 
 local scriptname = "ptx_freshstuff"
-local scriptversion = "0.13"
+local scriptversion = "0.14"
 
 local userlevels = {
 
@@ -1018,7 +1033,19 @@ function FreshStuff.OpenRel()
         FreshStuff.Count = FreshStuff.Count + 1
         FreshStuff.AllStuff[ FreshStuff.Count ] = { cat, who, when, title }
       else
-        error( msg_error_02 )
+        -- Robustness (Sopor 2026-07-14): skip a malformed line instead of
+        -- error()-ing the whole onStart. The releases store is line-based
+        -- "cat$who$when$title" text (not a util.loadtable literal), read
+        -- here with io.open + f:lines. A single blank / truncated /
+        -- transfer-mangled line (e.g. a populated releases.dat zipped up
+        -- and unpacked on another hub) used to abort load and take the
+        -- whole bot down. Now: empty lines are skipped silently, a
+        -- non-empty bad line is logged (so it is not dropped without a
+        -- trace) and skipped, and the good releases still load. A missing
+        -- file is already a no-op via the `if f` guard above.
+        if line ~= "" then
+          hub_debug( "ptx_freshstuff: skipping malformed releases line: " .. line )
+        end
       end
     end
     f:close()
