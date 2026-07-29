@@ -9,6 +9,11 @@
     "etc_wunschbrett.lua" by Motnahp
 		Enables you to post your request to a list where everyone can look in and see if there are 
 		items added.
+    v0.3
+        - fix a dead nil-fallback in showrequests(): a wish with no date
+          rendered "nil" instead of "n.a." because tostring( nil ) is the
+          truthy string "nil", so `... or "n.a."` never fired. Guarded
+          with ~= nil before tostring.
     v0.2
         - added date to tbl to see actuality
         - added timer to broadcast that items are added
@@ -181,7 +186,7 @@ showrequests = function (  )
 	local msg = showrequestmsg
 		
 	for i, wishtbl in ipairs( t_wunschbrett ) do
-		msg = msg.."\n["..i.."] [ "..( tostring( wishtbl.date ) or "n.a." ).." ] "..by..": "..wishtbl.user_nick.."\t - "..wishtbl.request
+		msg = msg.."\n["..i.."] [ "..( wishtbl.date ~= nil and tostring( wishtbl.date ) or "n.a." ).." ] "..by..": "..wishtbl.user_nick.."\t - "..wishtbl.request
 	end
 	return msg
 end
